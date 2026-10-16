@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+  <title>Word Desktop Simulator</title>
+  <!-- Modo Netlify: el progreso por matrícula se guarda en IndexedDB/localStorage del mismo navegador y dominio. -->
+  <link rel="stylesheet" href="styles.css" />
+
+
+</head>
+<body>
+  <input id="fileOpen" type="file" accept=".json,.html,.htm,.txt" hidden />
+  <input id="imageOpen" type="file" accept="image/*" hidden />
+
+  <div class="word-app">
+    <div class="window-titlebar">
+      <div class="quick-access" aria-label="Barra de acceso rápido">
+        <button class="qa" data-action="save" title="Guardar">💾</button>
+        <button class="qa" data-cmd="undo" title="Deshacer">↶</button>
+        <button class="qa" data-cmd="redo" title="Rehacer">↷</button>
+      </div>
+      <input id="documentTitle" class="window-title" value="Sección 1" aria-label="Nombre del documento" />
+      <div class="window-actions">
+        <button class="share-button">↗ Compartir</button>
+        <button class="win-btn">—</button>
+        <button class="win-btn">□</button>
+        <button class="win-btn danger">×</button>
+      </div>
+    </div>
+
+    <header class="ribbon-shell">
+      <nav class="tab-row" aria-label="Pestañas de Word">
+        <button class="tab archivo-tab" data-tab="archivo">Archivo</button>
+        <button class="tab active" data-tab="inicio">Inicio</button>
+        <button class="tab" data-tab="insertar">Insertar</button>
+        <button class="tab" data-tab="diseno">Diseño</button>
+        <button class="tab" data-tab="disposicion">Disposición</button>
+        <button class="tab" data-tab="referencias">Referencias</button>
+        <button class="tab" data-tab="correspondencia">Correspondencia</button>
+        <button class="tab" data-tab="revisar">Revisar</button>
+        <button class="tab" data-tab="vista">Vista</button>
+        <button class="tab" data-tab="ayuda">Ayuda</button>
+        <button class="tab" data-tab="quillbot">QuillBot</button>
+      </nav>
+
+      <section id="tab-inicio" class="ribbon active">
+        <div class="group clipboard-group">
+          <button class="big-tool" data-cmd="paste"><span class="big-icon">📋</span><span>Pegar</span><small>⌄</small></button>
+          <div class="vertical-tools">
+            <button data-cmd="cut" class="muted-tool">✂ Cortar</button>
+            <button data-cmd="copy" class="muted-tool">⧉ Copiar</button>
+            <button data-action="copyFormat">🖌 Copiar formato</button>
+          </div>
+          <span class="group-label">Portapapeles</span>
+        </div>
+
+        <div class="group font-group">
+          <div class="control-row">
+            <select id="fontFamily" class="font-select" title="Fuente">
+              <option>Aptos (Cuerpo)</option><option>Calibri</option><option selected>Arial</option><option>Times New Roman</option><option>Georgia</option><option>Verdana</option><option>Courier New</option><option>Trebuchet MS</option>
+            </select>
+            <select id="fontSize" class="size-select" title="Tamaño de fuente"><option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option><option>48</option></select>
+            <button data-action="growFont" title="Aumentar tamaño de fuente">A⌃</button><button data-action="shrinkFont" title="Disminuir tamaño de fuente">A⌄</button><button data-action="changeCase" title="Cambiar mayúsculas y minúsculas">Aa⌄</button>
+          </div>
+          <div class="control-row">
+            <button class="toggle strong-tool" data-cmd="bold" title="Negrita"><b>N</b></button>
+            <button class="toggle" data-cmd="italic" title="Cursiva"><i>K</i></button>
+            <button class="toggle underline-tool" data-cmd="underline" title="Subrayado"><u>S</u></button>
+            <button data-cmd="strikeThrough" title="Tachado"><s>abc</s></button>
+            <button data-action="subscript" title="Subíndice">x₂</button>
+            <button data-action="superscript" title="Superíndice">x²</button>
+            <button data-cmd="removeFormat" title="Borrar todo el formato">A⌫</button>
+            <div class="palette-wrapper">
+              <button class="color-button" data-action="toggleTextPalette" title="Color de fuente"><span class="font-a">A</span><span id="textColorSwatch" class="swatch" style="background:#0068FF"></span>⌄</button>
+              <div id="textPalette" class="palette-popover word-color-palette" hidden>
+                <button class="auto-color" data-color-target="foreColor" data-color="#000000"><span class="auto-square"></span>Automático</button>
+                <div class="palette-title">Colores del tema</div>
+                <div class="theme-color-grid">
+                  <button data-color-target="foreColor" data-color="#FFFFFF" style="background:#FFFFFF" title="Blanco"></button>
+                  <button data-color-target="foreColor" data-color="#000000" style="background:#000000" title="Negro"></button>
+                  <button data-color-target="foreColor" data-color="#EEECE1" style="background:#EEECE1" title="Fondo claro"></button>
+                  <button data-color-target="foreColor" data-color="#1F4E79" style="background:#1F4E79" title="Azul oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#0068FF" style="background:#0068FF" title="Azul RGB #0068FF"></button>
+                  <button data-color-target="foreColor" data-color="#FF7D01" style="background:#FF7D01" title="Anaranjado RGB #FF7D01"></button>
+                  <button data-color-target="foreColor" data-color="#00B050" style="background:#00B050" title="Verde"></button>
+                  <button data-color-target="foreColor" data-color="#00B0F0" style="background:#00B0F0" title="Azul claro"></button>
+                  <button data-color-target="foreColor" data-color="#7030A0" style="background:#7030A0" title="Morado"></button>
+                  <button data-color-target="foreColor" data-color="#70AD47" style="background:#70AD47" title="Verde tema"></button>
+                  <button data-color-target="foreColor" data-color="#F2F2F2" style="background:#F2F2F2" title="Gris 5%"></button>
+                  <button data-color-target="foreColor" data-color="#D9D9D9" style="background:#D9D9D9" title="Gris 15%"></button>
+                  <button data-color-target="foreColor" data-color="#BFBFBF" style="background:#BFBFBF" title="Gris 25%"></button>
+                  <button data-color-target="foreColor" data-color="#DDEBF7" style="background:#DDEBF7" title="Azul 10%"></button>
+                  <button data-color-target="foreColor" data-color="#BDD7EE" style="background:#BDD7EE" title="Azul 20%"></button>
+                  <button data-color-target="foreColor" data-color="#FCE4D6" style="background:#FCE4D6" title="Anaranjado 10%"></button>
+                  <button data-color-target="foreColor" data-color="#E2F0D9" style="background:#E2F0D9" title="Verde 10%"></button>
+                  <button data-color-target="foreColor" data-color="#DDEBF7" style="background:#DDEBF7" title="Azul claro 10%"></button>
+                  <button data-color-target="foreColor" data-color="#E4DFEC" style="background:#E4DFEC" title="Morado 10%"></button>
+                  <button data-color-target="foreColor" data-color="#E2F0D9" style="background:#E2F0D9" title="Verde tema 10%"></button>
+                  <button data-color-target="foreColor" data-color="#A6A6A6" style="background:#A6A6A6" title="Gris 35%"></button>
+                  <button data-color-target="foreColor" data-color="#7F7F7F" style="background:#7F7F7F" title="Gris 50%"></button>
+                  <button data-color-target="foreColor" data-color="#595959" style="background:#595959" title="Gris 65%"></button>
+                  <button data-color-target="foreColor" data-color="#5B9BD5" style="background:#5B9BD5" title="Azul tema"></button>
+                  <button data-color-target="foreColor" data-color="#2F75B5" style="background:#2F75B5" title="Azul tema oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#C65911" style="background:#C65911" title="Anaranjado oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#548235" style="background:#548235" title="Verde oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#0070C0" style="background:#0070C0" title="Azul fuerte"></button>
+                  <button data-color-target="foreColor" data-color="#5F2D7E" style="background:#5F2D7E" title="Morado oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#375623" style="background:#375623" title="Verde intenso"></button>
+                </div>
+                <div class="palette-title standard-title">Colores estándar</div>
+                <div class="standard-color-grid">
+                  <button data-color-target="foreColor" data-color="#C00000" style="background:#C00000" title="Rojo oscuro"></button>
+                  <button data-color-target="foreColor" data-color="#FF0000" style="background:#FF0000" title="Rojo"></button>
+                  <button data-color-target="foreColor" data-color="#FF7D01" style="background:#FF7D01" title="Anaranjado RGB #FF7D01"></button>
+                  <button data-color-target="foreColor" data-color="#FFC000" style="background:#FFC000" title="Dorado"></button>
+                  <button data-color-target="foreColor" data-color="#FFFF00" style="background:#FFFF00" title="Amarillo"></button>
+                  <button data-color-target="foreColor" data-color="#92D050" style="background:#92D050" title="Verde claro"></button>
+                  <button data-color-target="foreColor" data-color="#00B050" style="background:#00B050" title="Verde"></button>
+                  <button data-color-target="foreColor" data-color="#00B0F0" style="background:#00B0F0" title="Azul claro"></button>
+                  <button data-color-target="foreColor" data-color="#0068FF" style="background:#0068FF" title="Azul RGB #0068FF"></button>
+                  <button data-color-target="foreColor" data-color="#002060" style="background:#002060" title="Azul marino"></button>
+                  <button data-color-target="foreColor" data-color="#7030A0" style="background:#7030A0" title="Morado"></button>
+                </div>
+                <label class="custom-color">Más colores <input id="textColor" type="color" value="#0068FF"></label>
+              </div>
+            </div>
+            <div class="palette-wrapper">
+              <button class="color-button" data-action="toggleHighlightPalette" title="Color de resaltado"><span class="marker-icon">▰</span><span id="highlightSwatch" class="swatch" style="background:#FFFF00"></span>⌄</button>
+              <div id="highlightPalette" class="palette-popover" hidden>
+                <button data-color-target="hiliteColor" data-color="#FFFF00" style="background:#FFFF00" title="Amarillo"></button>
+                <button data-color-target="hiliteColor" data-color="#92D050" style="background:#92D050" title="Verde"></button>
+                <button data-color-target="hiliteColor" data-color="#00B0F0" style="background:#00B0F0" title="Azul"></button>
+                <button data-color-target="hiliteColor" data-color="#FF0000" style="background:#FF0000" title="Rojo"></button>
+                <button data-color-target="hiliteColor" data-color="#FFFFFF" style="background:#FFFFFF" title="Sin resaltado"></button>
+                <label class="custom-color">Más colores <input id="highlightColor" type="color" value="#ffff00"></label>
+              </div>
+            </div>
+          </div>
+          <span class="group-label">Fuente</span>
+        </div>
+
+        <div class="group paragraph-group">
+          <div class="control-row">
+            <button data-cmd="insertUnorderedList" title="Viñetas">• Lista</button><button data-cmd="insertOrderedList" title="Numeración">1. Lista</button><button data-action="multilevel" title="Lista multinivel">1.1</button>
+            <button data-cmd="outdent" title="Disminuir sangría">←</button><button data-cmd="indent" title="Aumentar sangría">→</button><button data-action="sort" title="Ordenar">A↧Z</button><button data-action="showMarks" title="Mostrar todo">¶</button>
+          </div>
+          <div class="control-row">
+            <button class="align-tool" data-cmd="justifyLeft" title="Alinear a la izquierda">☰ Izquierda</button><button class="align-tool" data-cmd="justifyCenter" title="Centrar">☷ Centrado</button><button class="align-tool" data-cmd="justifyRight" title="Alinear a la derecha">Derecha ☰</button><button class="align-tool" data-cmd="justifyFull" title="Justificar">☷ Justificar</button>
+            <select id="lineSpacing" title="Interlineado" class="line-spacing-select">
+              <option value="1">Interlineado 1.0</option><option value="1.15">Interlineado 1.15</option><option value="1.5" selected>Interlineado 1.5</option><option value="2">Interlineado 2.0</option><option value="2.5">Interlineado 2.5</option><option value="3">Interlineado 3.0</option>
+            </select>
+            <button data-action="shading" title="Sombreado">▧</button><button data-action="borders" title="Bordes">▦</button>
+          </div>
+          <span class="group-label">Párrafo</span>
+        </div>
+
+        <div class="group styles-group">
+          <div class="styles-gallery">
+            <button class="style-card active-style" data-style="normal"><span>AaBbCcD</span><small>¶ Normal</small></button>
+            <button class="style-card" data-style="noSpacing"><span>AaBbCcD</span><small>¶ Sin espa...</small></button>
+            <button class="style-card title1" data-style="h1"><span>AaBb</span><small>Título 1</small></button>
+            <button class="style-card title2" data-style="h2"><span>AaBbC</span><small>Título 2</small></button>
+            <button class="style-card title-main" data-style="title"><span>AaB</span><small>Título</small></button>
+            <button class="style-card subtitle" data-style="subtitle"><span>AaBbCc</span><small>Subtítulo</small></button>
+          </div>
+          <div class="gallery-arrows"><button>⌃</button><button>⌄</button><button>⋯</button></div>
+          <span class="group-label">Estilos</span>
+        </div>
+
+        <div class="group editing-group">
+          <button data-action="find">⌕ Buscar</button>
+          <button data-action="replace">ᵃᵇ Reemplazar</button>
+          <button data-action="selectAll">⌖ Seleccionar</button>
+          <span class="group-label">Edición</span>
+        </div>
+
+        <div class="group addins-group">
+          <button class="grid-icon" data-action="addins">▦</button>
+          <span class="group-label">Complementos</span>
+        </div>
+      </section>
+
+      <section id="tab-insertar" class="ribbon">
+        <div class="group"><button class="big-tool" data-action="cover"><span class="big-icon">▣</span>Portada</button><button data-action="blankPage">Página en blanco</button><button data-action="pageBreak">Salto de página</button><span class="group-label">Páginas</span></div>
+        <div class="group"><button data-action="table">▦ Tabla</button><span class="group-label">Tablas</span></div>
+        <div class="group"><button data-action="image">🖼 Imágenes</button><button data-action="shapes">◯ Formas</button><button data-action="icons">☆ Iconos</button><button data-action="smartArt">▱ SmartArt</button><button data-action="chart">📊 Gráfico</button><span class="group-label">Ilustraciones</span></div>
+        <div class="group"><button data-action="link">🔗 Vínculo</button><button data-action="bookmark">🔖 Marcador</button><span class="group-label">Vínculos</span></div>
+        <div class="group"><button data-action="header">Encabezado</button><button data-action="footer">Pie de página</button><button data-action="pageNumber">Número de página</button><span class="group-label">Encabezado y pie</span></div>
+        <div class="group"><button data-action="textBox">Cuadro de texto</button><button data-action="wordArt">WordArt</button><button data-action="date">Fecha y hora</button><span class="group-label">Texto</span></div>
+      </section>
+
+      <section id="tab-diseno" class="ribbon">
+        <div class="group themes"><button data-theme="office">Tema Office</button><button data-theme="blue">Azul</button><button data-theme="green">Verde</button><button data-theme="gray">Gris</button><span class="group-label">Formato del documento</span></div>
+        <div class="group"><button data-action="watermark">Marca de agua</button><button data-action="pageColor">Color de página</button><button data-action="pageBorder">Bordes de página</button><span class="group-label">Fondo de página</span></div>
+      </section>
+
+      <section id="tab-disposicion" class="ribbon">
+        <div class="group"><button data-action="margins">Márgenes</button><button data-action="orientation">Orientación</button><button data-action="size">Tamaño</button><button data-action="columns">Columnas</button><button data-action="breaks">Saltos</button><span class="group-label">Configurar página</span></div>
+        <div class="group"><button data-action="indentLeft">Izquierda</button><button data-action="indentRight">Derecha</button><button data-action="spacingBefore">Antes</button><button data-action="spacingAfter">Después</button><span class="group-label">Párrafo</span></div>
+        <div class="group"><button data-action="position">Posición</button><button data-action="wrapText">Ajustar texto</button><button data-action="bringFront">Traer adelante</button><button data-action="sendBack">Enviar atrás</button><span class="group-label">Organizar</span></div>
+      </section>
+
+      <section id="tab-referencias" class="ribbon">
+        <div class="group"><button data-action="toc">Tabla de contenido</button><button data-action="addText">Agregar texto</button><span class="group-label">Tabla de contenido</span></div>
+        <div class="group"><button data-action="footnote">Insertar nota al pie</button><button data-action="endnote">Nota al final</button><span class="group-label">Notas al pie</span></div>
+        <div class="group"><button data-action="citation">Insertar cita</button><button data-action="bibliography">Bibliografía</button><span class="group-label">Citas y bibliografía</span></div>
+        <div class="group"><button data-action="caption">Insertar título</button><button data-action="index">Marcar entrada</button><span class="group-label">Índice</span></div>
+      </section>
+
+      <section id="tab-correspondencia" class="ribbon">
+        <div class="group"><button data-action="envelopes">Sobres</button><button data-action="labels">Etiquetas</button><span class="group-label">Crear</span></div>
+        <div class="group"><button data-action="startMerge">Iniciar combinación</button><button data-action="recipients">Seleccionar destinatarios</button><button data-action="insertMergeField">Insertar campo</button><span class="group-label">Combinar correspondencia</span></div>
+        <div class="group"><button data-action="previewResults">Vista previa</button><button data-action="finishMerge">Finalizar y combinar</button><span class="group-label">Finalizar</span></div>
+      </section>
+
+      <section id="tab-revisar" class="ribbon">
+        <div class="group"><button class="big-tool" data-action="spelling"><span class="big-icon">✓</span>Ortografía</button><button data-action="spellCheckNow">Analizar documento</button><button data-action="clearSpellingMarks">Omitir marcas</button><button data-action="wordCount">Contar palabras</button><span class="group-label">Revisión</span></div>
+        <div class="group"><button data-action="thesaurus">Sinónimos</button><button data-action="grammar">Gramática</button><span class="group-label">Idioma</span></div>
+        <div class="group"><button data-action="comment">Nuevo comentario</button><button data-action="deleteComments">Eliminar comentarios</button><span class="group-label">Comentarios</span></div>
+        <div class="group"><button data-action="trackChanges">Control de cambios</button><button data-action="acceptChange">Aceptar</button><button data-action="rejectChange">Rechazar</button><span class="group-label">Seguimiento</span></div>
+        <div class="group"><button data-action="protect">Restringir edición</button><span class="group-label">Proteger</span></div>
+      </section>
+
+      <section id="tab-vista" class="ribbon">
+        <div class="group"><button data-view="print">Diseño de impresión</button><button data-view="web">Diseño web</button><button data-view="read">Modo lectura</button><span class="group-label">Vistas</span></div>
+        <div class="group"><label><input id="toggleRuler" type="checkbox" checked> Regla</label><label><input id="toggleGrid" type="checkbox"> Líneas de cuadrícula</label><label><input id="toggleNav" type="checkbox" checked> Panel navegación</label><span class="group-label">Mostrar</span></div>
+        <div class="group"><button data-action="zoomOut">−</button><button data-action="zoom100">100%</button><button data-action="zoomIn">+</button><button data-action="onePage">Una página</button><span class="group-label">Zoom</span></div>
+        <div class="group"><button data-action="newWindow">Nueva ventana</button><button data-action="split">Dividir</button><span class="group-label">Ventana</span></div>
+      </section>
+
+      <section id="tab-ayuda" class="ribbon"><div class="group"><button data-action="help">Ayuda de Word</button><button data-action="training">Aprendizaje</button><button data-action="feedback">Comentarios</button><span class="group-label">Ayuda</span></div></section>
+      <section id="tab-quillbot" class="ribbon"><div class="group"><button data-action="paraphrase">Parafrasear selección</button><button data-action="summarize">Resumir documento</button><button data-action="grammar">Revisar gramática</button><span class="group-label">QuillBot simulado</span></div></section>
+    </header>
+
+    <div id="backstage" class="backstage" hidden>
+      <aside class="backstage-menu">
+        <button class="back-arrow" data-action="closeBackstage" title="Volver al documento">←</button>
+        <button class="back-active" data-backstage="info">Información</button>
+        <button data-action="new">Nuevo</button>
+        <button data-action="open">Abrir</button>
+        <button data-action="save">Guardar</button>
+        <button data-backstage="saveAs">Guardar como</button>
+        <button data-action="print">Imprimir</button>
+        <button data-action="closeBackstage">Cerrar</button>
+      </aside>
+      <section class="backstage-content">
+        <div id="backstage-info" class="backstage-panel active">
+          <h1>Archivo</h1>
+          <p>Administra el documento local desde el navegador.</p>
+          <div class="info-card"><b>Documento:</b> <span id="infoName">Documento1 - Word</span><br><b>Guardado:</b> <span id="infoSaved">Sin guardar</span></div>
+        </div>
+        <div id="backstage-saveAs" class="backstage-panel">
+          <h1>Guardar como</h1>
+          <p>Selecciona el formato de salida. En esta versión están habilitadas las opciones <b>Documento de Word</b> y <b>PDF</b>.</p>
+          <div class="save-as-box">
+            <label for="saveAsFormat">Tipo de archivo</label>
+            <select id="saveAsFormat" size="17" class="save-as-select" aria-label="Formatos de guardar como">
+              <option value="docx">Documento de Word</option>
+              <option disabled>Documento habilitado con macros de Word</option>
+              <option disabled>Documento de Word 97-2003</option>
+              <option disabled>Plantilla de Word</option>
+              <option disabled>Plantilla habilitada con macros de Word</option>
+              <option disabled>Plantilla de Word 97-2003</option>
+              <option value="pdf">PDF</option>
+              <option disabled>Documento XPS</option>
+              <option disabled>Página web de un solo archivo</option>
+              <option disabled>Página web</option>
+              <option disabled>Página web, filtrada</option>
+              <option disabled>Formato RTF</option>
+              <option disabled>Texto sin formato</option>
+              <option disabled>Documento XML de Word</option>
+              <option disabled>Documento XML de Word 2003</option>
+              <option disabled>Documento Open XML estricto</option>
+              <option disabled>Texto de OpenDocument</option>
+            </select>
+            <p class="save-as-note">Al elegir <b>Documento de Word</b>, se descargará un archivo editable .docx. Al elegir <b>PDF</b>, el documento se convierte y se descarga automáticamente.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="ruler"><span class="corner-mark">L</span><div class="ruler-ticks"></div></div>
+
+    <main class="document-workspace">
+      <aside id="navigationPane" class="navigation-pane">
+        <div class="search-box"><input id="findText" placeholder="Buscar en documento" /><button data-action="find">⌕</button></div>
+        <button class="outline-wide" data-action="replace">Reemplazar</button>
+        <h3>Encabezados</h3>
+        <ul id="headingList"></ul>
+      </aside>
+
+      <section class="canvas-wrap">
+        <article id="page" class="page a4-page samuel-pdf-page" data-section="1" aria-label="Sección 1">
+          <div id="headerArea" class="header-area" contenteditable="true" spellcheck="true" lang="es-ES">Encabezado</div>
+          <div id="editor" class="editor" contenteditable="true" spellcheck="true" lang="es-ES" autocapitalize="sentences"></div>
+          <div id="footerArea" class="footer-area" contenteditable="true" spellcheck="true" lang="es-ES">Pie de página</div>
+        </article>
+        <article id="page2" class="page a4-page samuel-pdf-page section-page" data-section="2" aria-label="Sección 2">
+          <div id="headerArea2" class="header-area" contenteditable="true" spellcheck="true" lang="es-ES"></div>
+          <div id="editor2" class="editor section-editor" contenteditable="true" spellcheck="true" lang="es-ES" autocapitalize="sentences"><div class="section-two-budget" data-section-content="2">
+            <h1 class="section-two-budget-title">MI PLANIFICADOR SEMANAL</h1>
+            <table class="weekly-budget-table" aria-label="Tabla editable de presupuesto semanal">
+              <tbody>
+                <tr><th scope="col">Horario</th><th scope="col">Lunes</th><th scope="col">Martes</th><th scope="col">Miércoles</th><th scope="col">Jueves</th><th scope="col">Viernes</th><th scope="col">Sábado</th><th scope="col">Domingo</th></tr>
+                <tr><td class="budget-time-cell">5:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">6:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">7:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">8:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">9:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">10:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">11:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">12:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">1:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">2:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">3:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">4:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">5:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">6:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">7:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">8:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">9:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">10:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">11:00 p.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+                <tr><td class="budget-time-cell">12:00 a.m.</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr>
+              </tbody>
+            </table>
+          </div></div>
+          <div id="footerArea2" class="footer-area" contenteditable="true" spellcheck="true" lang="es-ES"></div>
+        </article>
+        <article id="page3" class="page a4-page samuel-pdf-page section-page" data-section="3" aria-label="Sección 3">
+          <div id="headerArea3" class="header-area" contenteditable="true" spellcheck="true" lang="es-ES"></div>
+          <div id="editor3" class="editor section-editor" contenteditable="true" spellcheck="true" lang="es-ES" autocapitalize="sentences"><div class="section-three-task" data-section-content="3">
+            <h1 class="section-three-title">INSERCIÓN DE PARTICIPACIÓN EN EL FORO DE BIENVENIDA</h1>
+            <div class="section-three-image-area" data-samuel-role="section3-image-area"><br></div>
+          </div></div>
+          <div id="footerArea3" class="footer-area" contenteditable="true" spellcheck="true" lang="es-ES"></div>
+        </article>
+      </section>
+
+      <aside class="properties-pane">
+        <h3>Documento</h3>
+        <p><b id="words">0</b> palabras</p><p><b id="chars">0</b> caracteres</p><p><b id="pages">3</b> páginas</p>
+        <hr>
+        <label>Buscar</label><input id="findTextSide" placeholder="Texto" />
+        <label>Reemplazar</label><input id="replaceText" placeholder="Nuevo texto" />
+        <button class="outline-wide" id="btnReplaceAll">Reemplazar todo</button>
+        <button class="outline-wide" data-action="preview">Vista previa</button>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <span id="status">Listo</span>
+      <span id="pageStatus">Página 1 de 3</span>
+      <span id="wordStatus">0 palabras</span>
+      <span>Español (México)</span>
+      <span id="viewStatus">Diseño de impresión</span>
+      <span class="zoom-control"><button data-action="zoomOut">−</button><input id="zoomRange" type="range" min="50" max="160" value="100"><button data-action="zoomIn">+</button><b id="zoomLabel">100%</b></span>
+    </footer>
+  </div>
+
+  <dialog id="modalDialog" class="modal-dialog">
+    <form method="dialog">
+      <h2 id="modalTitle">Título</h2>
+      <div id="modalBody"></div>
+      <menu><button value="cancel">Cerrar</button></menu>
+    </form>
+  </dialog>
+
+
+<!-- Corrección específica: backstage completo, flecha hacia la derecha y Guardar como retráctil -->
+
+
+
+
+<!-- Tutorial guiado corregido: mensajes al final, botón Terminar y cierre controlado -->
+
+
+
+<!-- Ajuste solicitado: títulos de secciones centrados/negritas sin alterar lo demás -->
+
+<!-- Corrección final: opciones de guardado, botón de pasos naranja y mensajes flotantes azules -->
+
+
+
+
+<!-- Ajuste compacto multiplataforma Android/iOS v2 -->
+
+
+
+
+<!-- Ajuste fino vertical: tips sin rabillo, botones compactos y color de fuente -->
+
+
+
+<!-- Ajuste horizontal: boton Terminar debajo del aviso de la seccion 2 -->
+<!-- Mensajes principales automaticos para secciones 2 y 3, solo en horizontal -->
+<!-- FORZADO FASE 3: mensaje automatico solo en vista horizontal, sin polling -->
+<!-- Correccion definitiva: mensaje de Seccion 3 solo al inicio y solo horizontal -->
+
+
+<!-- Correccion de duplicados: una sola instruccion por fase en horizontal -->
+
+
+
+<!-- Ajuste exclusivo para version web/laptop: mensajes emergentes sin rabillo -->
+
+  <script src="dictionary_words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

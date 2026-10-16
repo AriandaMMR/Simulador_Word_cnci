@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulador de pantalla celular</title>
+<style>
+:root{color-scheme:dark;--phone-w:390px;--phone-h:844px;--scale:1}
+*{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:#101318;color:#f7f8fa}
+body{min-height:100vh;overflow:auto;background:radial-gradient(circle at 50% 0,#283243 0,#171b22 42%,#0d1015 100%)}
+.app{min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+.toolbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;background:rgba(17,20,26,.94);border-bottom:1px solid #323844;backdrop-filter:blur(12px)}
+.brand{font-weight:800;margin-right:auto;white-space:nowrap}.brand span{color:#6db3ff}
+.control{display:flex;align-items:center;gap:7px;color:#cbd2dc;font-size:13px}
+select,button{height:38px;border:1px solid #414957;border-radius:9px;background:#242a34;color:#fff;padding:0 12px;font:inherit;cursor:pointer}
+button:hover,select:hover{border-color:#6db3ff}button:focus-visible,select:focus-visible{outline:2px solid #6db3ff;outline-offset:2px}
+button.primary{background:#1473e6;border-color:#1473e6}.hint{font-size:12px;color:#9aa4b2;width:100%;text-align:right}
+.stage{display:flex;align-items:flex-start;justify-content:center;padding:34px 20px 80px;min-width:max-content}
+.phone-scale{width:calc(var(--phone-w) * var(--scale));height:calc(var(--phone-h) * var(--scale));transition:width .2s,height .2s}
+.phone{width:var(--phone-w);height:var(--phone-h);transform:scale(var(--scale));transform-origin:top left;position:relative;padding:11px;border:2px solid #555d69;border-radius:48px;background:linear-gradient(145deg,#353b45,#080a0e 68%);box-shadow:0 30px 80px #000b,0 0 0 2px #090b0f inset,0 0 0 1px #707987}
+.phone.landscape{border-radius:38px}.screen{position:relative;width:100%;height:100%;overflow:hidden;border-radius:37px;background:#fff}.phone.landscape .screen{border-radius:28px}
+iframe{width:100%;height:100%;border:0;background:#fff;display:block}
+.notch{position:absolute;z-index:5;top:17px;left:50%;transform:translateX(-50%);width:118px;height:28px;border-radius:18px;background:#050608;pointer-events:none;box-shadow:0 1px 2px #0008}.phone.landscape .notch{width:28px;height:98px;left:17px;top:50%;transform:translateY(-50%)}
+.home{position:absolute;z-index:5;bottom:17px;left:50%;transform:translateX(-50%);width:112px;height:5px;border-radius:5px;background:#111a;pointer-events:none}.phone.landscape .home{width:5px;height:90px;left:auto;right:17px;bottom:50%;transform:translateY(50%)}
+.badge{position:absolute;z-index:6;left:50%;bottom:-33px;transform:translateX(-50%);font-size:12px;color:#aeb8c5;white-space:nowrap}
+@media(max-width:760px){.toolbar{align-items:flex-start}.brand{width:100%}.hint{text-align:left}.stage{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="toolbar">
+    <div class="brand">Simulador <span>móvil</span></div>
+    <label class="control">Dispositivo
+      <select id="device">
+        <option value="390x844">Teléfono moderno (390 × 844)</option>
+        <option value="375x667">Teléfono compacto (375 × 667)</option>
+        <option value="360x800">Android convencional (360 × 800)</option>
+        <option value="412x915">Android grande (412 × 915)</option>
+        <option value="430x932">Teléfono grande (430 × 932)</option>
+      </select>
+    </label>
+    <label class="control">Escala
+      <select id="scale">
+        <option value="1">100%</option><option value=".9">90%</option><option value=".8">80%</option><option value=".7">70%</option><option value=".6">60%</option><option value=".5">50%</option>
+      </select>
+    </label>
+    <button id="rotate" type="button">↻ Girar</button>
+    <button id="reload" type="button">↶ Recargar</button>
+    <button id="open" class="primary" type="button">Abrir aparte</button>
+    <div class="hint">La aplicación se ejecuta dentro de la pantalla. Puedes escribir, tocar botones, reproducir audio y probar todas sus funciones.</div>
+  </header>
+  <main class="stage">
+    <div class="phone-scale" id="phoneScale">
+      <div class="phone" id="phone">
+        <div class="notch"></div>
+        <div class="screen"><iframe id="preview" src="index_mobile_v3.html?v=stable3" title="Vista previa móvil" allow="autoplay; clipboard-read; clipboard-write"></iframe></div>
+        <div class="home"></div>
+        <div class="badge" id="badge">390 × 844 px · vertical</div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+(() => {
+  const root=document.documentElement, device=document.querySelector('#device'), scale=document.querySelector('#scale');
+  const phone=document.querySelector('#phone'), preview=document.querySelector('#preview'), badge=document.querySelector('#badge');
+  let rotated=false;
+  function apply(){
+    let [w,h]=device.value.split('x').map(Number); if(rotated)[w,h]=[h,w];
+    const s=Number(scale.value); root.style.setProperty('--phone-w',w+'px');root.style.setProperty('--phone-h',h+'px');root.style.setProperty('--scale',s);
+    phone.classList.toggle('landscape',rotated);badge.textContent=`${w} × ${h} px · ${rotated?'horizontal':'vertical'} · escala ${Math.round(s*100)}%`;
+  }
+  device.addEventListener('change',apply);scale.addEventListener('change',apply);
+  document.querySelector('#rotate').addEventListener('click',()=>{rotated=!rotated;apply()});
+  document.querySelector('#reload').addEventListener('click',()=>{try{preview.contentWindow.location.reload()}catch(e){preview.src=preview.src}});
+  document.querySelector('#open').addEventListener('click',()=>window.open('index_mobile_v3.html?v=stable3','_blank'));
+  function autoScale(){const available=Math.max(320,window.innerWidth-48);let [w,h]=device.value.split('x').map(Number);if(rotated)[w,h]=[h,w];if(w>available){const best=Math.max(.5,Math.floor((available/w)*10)/10);scale.value=String(best);apply()}}
+  apply();autoScale();
+})();
+</script>
+</body>
+</html>
