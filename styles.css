@@ -1992,3 +1992,97 @@ dialog#samuelShowStepsAgainPanel li {
     touch-action: pan-y pinch-zoom !important;
   }
 }
+
+/* Recordatorio del paso pendiente */
+
+#samuelPendingStepReminder {
+  box-sizing: border-box;
+  width: calc(100% - 32px);
+  max-width: 430px;
+
+  max-height: 85vh;
+  max-height: 85dvh;
+  overflow-y: auto;
+
+  margin: auto;
+  padding: 24px;
+
+  border: 0;
+  border-radius: 18px;
+
+  background: #fff;
+  color: #222;
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
+  font-size: 16px;
+
+  touch-action: pan-y pinch-zoom;
+}
+
+#samuelPendingStepReminder::backdrop {
+  background: rgba(15, 23, 42, .65);
+}
+
+#samuelPendingStepReminder h2 {
+  margin: 0 0 12px;
+  color: #2A6AFF;
+  font-size: 22px;
+}
+
+#samuelPendingStepReminder .pending-step-label {
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+#samuelPendingStepText {
+  margin-top: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #eef4ff;
+}
+
+#samuelPendingStepReminder button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 16px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #FF7D01;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+/* Terminar: posición accesible y consistente */
+
+body #samuelTutorialFinishButton,
+body #samuelTutorialFinishButton.v3-phase2-finish:not([hidden]) {
+  position: fixed !important;
+
+  top: auto !important;
+  right: auto !important;
+
+  left: calc(12px + env(safe-area-inset-left, 0px)) !important;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+
+  transform: none !important;
+  margin: 0 !important;
+
+  width: auto !important;
+  min-width: 104px !important;
+  height: auto !important;
+  min-height: 44px !important;
+
+  padding: 10px 18px !important;
+  border-radius: 12px !important;
+
+  font-size: 15px !important;
+  line-height: 1.2 !important;
+}
+
+body #samuelTutorialFinishButton[hidden] {
+  display: none !important;
+}

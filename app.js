@@ -1771,6 +1771,9 @@ height: 1
   }
 
   function exposeTutorialProgressApi() {
+    window.__samuelRepeatCurrentTip = function () {
+  showTipForRestoredState();
+};
     window.__samuelGetTutorialProgress = function () {
       return {
         state: state,
@@ -3476,3 +3479,273 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   },true);
 })();
 
+/* Recordatorio de pasos: sección 1 */
+
+(function () {
+  "use strict";
+
+  if (window.__samuelStepGuardInstalled) return;
+  window.__samuelStepGuardInstalled = true;
+
+  var reminder = null;
+  var instruction = null;
+
+  var steps = {
+    "init": {
+      text: "Toca la hoja en blanco y redacta por qué elegiste tu carrera.",
+      allowed: ""
+    },
+
+    "section1-ready": {
+      text: "Toca la hoja en blanco y comienza tu párrafo.",
+      allowed: ""
+    },
+
+    "paragraph-writing": {
+      text: "Redacta tu párrafo sobre por qué elegiste esta carrera.",
+      allowed: ""
+    },
+
+    "paragraph-enter": {
+      text: "Termina tu párrafo y presiona Enter para continuar.",
+      allowed: ""
+    },
+
+    "title-writing": {
+      text: "Escribe un título relacionado con tu párrafo.",
+      allowed: ""
+    },
+
+    "select-title-bold": {
+      text: "Selecciona todo el título para aplicar negritas.",
+      allowed: ""
+    },
+
+    "bold-click": {
+      text: "Con el título seleccionado, toca el botón de negritas.",
+      allowed: '[data-cmd="bold"]'
+    },
+
+    "select-title-color": {
+      text: "Selecciona el título para cambiar su color.",
+      allowed: ""
+    },
+
+    "color-button-click": {
+      text: "Abre el botón de color de fuente.",
+      allowed: '[data-action="toggleTextPalette"]'
+    },
+
+    "institutional-color-click": {
+      text: "Selecciona el color azul institucional.",
+      allowed: '#textPalette [data-color="#0068FF"]'
+    },
+
+    "select-important-phrase": {
+      text: "Selecciona una palabra o frase importante de tu párrafo.",
+      allowed: ""
+    },
+
+    "italic-click": {
+      text: "Con tu frase seleccionada, toca el botón de cursiva.",
+      allowed: '[data-cmd="italic"]'
+    },
+
+    "paragraph-final-enter": {
+      text: "Presiona Enter después del párrafo para preparar tu lista de metas.",
+      allowed: ""
+    },
+
+    "bullet-click": {
+      text: "Toca el botón de viñetas para comenzar tu lista de metas.",
+      allowed: '[data-cmd="insertUnorderedList"]'
+    },
+
+    "first-goal-writing": {
+      text: "Escribe la primera meta que quieres lograr durante tu carrera.",
+      allowed: ""
+    },
+
+    "first-goal-enter": {
+      text: "Termina tu primera meta y presiona Enter para agregar la segunda.",
+      allowed: ""
+    },
+
+    "second-goal-writing": {
+      text: "Escribe tu segunda meta.",
+      allowed: ""
+    },
+
+    "finish-click": {
+      text: "Revisa tus dos metas y toca Terminar para continuar.",
+      allowed: "#samuelTutorialFinishButton"
+    }
+  };
+
+  function getPendingStep() {
+    if (typeof window.__samuelGetTutorialProgress !== "function") {
+      return null;
+    }
+
+    var progress = window.__samuelGetTutorialProgress();
+
+    if (
+      !progress ||
+      Number(progress.activeSection) !== 1 ||
+      progress.finalFlowReady
+    ) {
+      return null;
+    }
+
+    return steps[progress.state] || null;
+  }
+
+  function createReminder() {
+    if (reminder) return;
+
+    reminder = document.createElement("dialog");
+    reminder.id = "samuelPendingStepReminder";
+    reminder.setAttribute(
+      "aria-labelledby",
+      "samuelPendingStepTitle"
+    );
+
+    reminder.innerHTML = `
+      <h2 id="samuelPendingStepTitle">
+        Vamos paso a paso
+      </h2>
+
+      <p>
+        Recuerda terminar el paso pendiente
+        antes de explorar otras herramientas.
+      </p>
+
+      <p class="pending-step-label">Paso pendiente:</p>
+
+      <p id="samuelPendingStepText"></p>
+
+      <button type="button" autofocus>
+        Volver al paso
+      </button>
+    `;
+
+    document.body.appendChild(reminder);
+
+    instruction = reminder.querySelector(
+      "#samuelPendingStepText"
+    );
+
+    reminder.querySelector("button").addEventListener(
+      "click",
+      function () {
+        reminder.close();
+      }
+    );
+
+    reminder.addEventListener("close", function () {
+      if (
+        typeof window.__samuelRepeatCurrentTip === "function"
+      ) {
+        window.__samuelRepeatCurrentTip();
+      }
+    });
+  }
+
+  window.addEventListener("click", function (event) {
+    var target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    // Las ventanas abiertas tienen su propio funcionamiento.
+    if (document.querySelector("dialog[open]")) return;
+
+    // Conserva los mensajes de introducción y cierre.
+    if (
+      document.querySelector(
+        [
+          "#samuelStartIntroOverlay.is-visible",
+          "#samuelTutorialCompleteOverlay.is-visible",
+          "#samuelTutorialSection2Overlay.is-visible",
+          "#samuelTutorialSection3Overlay.is-visible",
+          "#samuelFinalDeliveryOverlay.is-visible"
+        ].join(",")
+      )
+    ) {
+      return;
+    }
+
+    var step = getPendingStep();
+    if (!step) return;
+
+    // Consultar los pasos siempre está permitido.
+    if (
+      target.closest(
+        "#samuelShowStepsAgainWrap, #samuelShowStepsAgainPanel"
+      )
+    ) {
+      return;
+    }
+
+    // Permite volver a Inicio para encontrar la herramienta.
+    if (target.closest('[data-tab="inicio"]')) return;
+
+    // Permite la herramienta correspondiente al paso actual.
+    if (step.allowed && target.closest(step.allowed)) return;
+
+    // Solo intercepta herramientas; no bloquea las hojas,
+    // la selección de texto ni el desplazamiento.
+    var control = target.closest(
+      [
+        ".ribbon-shell button",
+        ".ribbon-shell select",
+        ".ribbon-shell input",
+        ".quick-access button",
+        "#samuelTutorialFinishButton"
+      ].join(",")
+    );
+
+    if (!control) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    createReminder();
+
+    instruction.textContent = step.text;
+
+    if (!reminder.open) {
+      reminder.showModal();
+    }
+  }, true);
+})();
+
+/* Mostrar los pasos después de iniciar desde la bienvenida */
+
+(function () {
+  "use strict";
+
+  document.addEventListener("click", function (event) {
+    if (!(event.target instanceof Element)) return;
+
+    var startButton = event.target.closest(
+      "#samuelStartIntroOverlay .samuel-start-button"
+    );
+
+    if (!startButton) return;
+
+    // Deja que primero se cierre la bienvenida.
+    window.setTimeout(function () {
+      var stepsButton = document.getElementById(
+        "samuelShowStepsAgainButton"
+      );
+
+      var stepsPanel = document.getElementById(
+        "samuelShowStepsAgainPanel"
+      );
+
+      if (!stepsButton || !stepsPanel || stepsPanel.open) return;
+
+      stepsButton.click();
+    }, 0);
+  }, true);
+})();
