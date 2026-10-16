@@ -2751,30 +2751,114 @@ height: 1
     });
   }
   function createStepsInterface() {
-    if (document.getElementById('samuelShowStepsAgainWrap')) return;
-    wrap = document.createElement('div');
-    wrap.id = 'samuelShowStepsAgainWrap';
-    wrap.innerHTML = '<button id="samuelShowStepsAgainButton" type="button">Mostrar pasos detallados</button><span class="samuel-drag-help">Arrastra para mover</span><div id="samuelShowStepsAgainPanel" role="dialog" aria-live="polite" aria-label="Pasos de la sección actual"><div class="samuel-steps-header"><h3 class="samuel-steps-title"></h3><button class="samuel-steps-close" type="button" aria-label="Cerrar pasos">×</button></div><div class="samuel-steps-body"></div></div>';
-    document.body.appendChild(wrap);
-    button = document.getElementById('samuelShowStepsAgainButton');
-    panel = document.getElementById('samuelShowStepsAgainPanel');
-    titleNode = panel.querySelector('.samuel-steps-title');
-    bodyNode = panel.querySelector('.samuel-steps-body');
-    closeButton = panel.querySelector('.samuel-steps-close');
-    button.addEventListener('click', function (event) {
-      event.preventDefault(); event.stopPropagation();
-      currentSection = detectCurrentSection();
-      renderSteps(currentSection);
-      panelOpen = !panel.classList.contains('is-open');
-      panel.classList.toggle('is-open', panelOpen);
-    });
-    closeButton.addEventListener('click', function (event) {
-      event.preventDefault(); event.stopPropagation();
-      panelOpen = false; panel.classList.remove('is-open');
-    });
-    installDraggableStepsButton();
-    restoreStepsButtonPlacement();
-  }
+  if (document.getElementById('samuelShowStepsAgainWrap')) return;
+
+  wrap = document.createElement('div');
+  wrap.id = 'samuelShowStepsAgainWrap';
+
+  wrap.innerHTML = `
+    <button id="samuelShowStepsAgainButton" type="button">
+      Mostrar pasos detallados
+    </button>
+    <span class="samuel-drag-help">Arrastra para mover</span>
+  `;
+
+  document.body.appendChild(wrap);
+
+  button = document.getElementById('samuelShowStepsAgainButton');
+
+  // La ventana se coloca fuera del botón flotante.
+  panel = document.createElement('dialog');
+  panel.id = 'samuelShowStepsAgainPanel';
+  panel.setAttribute('aria-labelledby', 'samuelStepsModalTitle');
+
+  panel.innerHTML = `
+    <div class="samuel-steps-header">
+      <h3
+        id="samuelStepsModalTitle"
+        class="samuel-steps-title"
+      ></h3>
+
+      <button
+        class="samuel-steps-close"
+        type="button"
+        aria-label="Cerrar pasos"
+        autofocus
+      >×</button>
+    </div>
+
+    <div class="samuel-steps-body"></div>
+  `;
+
+  document.body.appendChild(panel);
+
+  titleNode = panel.querySelector('.samuel-steps-title');
+  bodyNode = panel.querySelector('.samuel-steps-body');
+  closeButton = panel.querySelector('.samuel-steps-close');
+
+  button.setAttribute('aria-haspopup', 'dialog');
+  button.setAttribute('aria-controls', panel.id);
+  button.setAttribute('aria-expanded', 'false');
+
+  let savedSelection = null;
+
+  button.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (panel.open) return;
+
+    const selection = window.getSelection();
+
+    savedSelection = selection && selection.rangeCount
+      ? selection.getRangeAt(0).cloneRange()
+      : null;
+
+    currentSection = detectCurrentSection();
+    renderSteps(currentSection);
+
+    panelOpen = true;
+    panel.classList.add('is-open');
+    button.setAttribute('aria-expanded', 'true');
+
+    panel.showModal();
+    bodyNode.scrollTop = 0;
+  });
+
+  closeButton.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    panel.close();
+  });
+
+  panel.addEventListener('close', function () {
+    panelOpen = false;
+    panel.classList.remove('is-open');
+    button.setAttribute('aria-expanded', 'false');
+
+    button.focus({ preventScroll: true });
+
+    // Conserva la selección del documento al regresar.
+    if (
+      savedSelection &&
+      savedSelection.startContainer.isConnected &&
+      savedSelection.endContainer.isConnected
+    ) {
+      const selection = window.getSelection();
+
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(savedSelection);
+      }
+    }
+
+    savedSelection = null;
+  });
+
+  installDraggableStepsButton();
+  restoreStepsButtonPlacement();
+}
+
   function getStepsPlacementKey() {
     var matricula = window.__samuelCurrentMatricula || 'global';
     return 'samuel-steps-button-placement-v3::' + encodeURIComponent(matricula);
@@ -2916,7 +3000,11 @@ height: 1
     bodyNode.innerHTML = '<ol>' + data.items.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('') + '</ol>';
   }
   function updateSectionAndVisibility() {
+
     if (!wrap) return;
+
+     // Mantiene abierta la consulta hasta que la persona la cierre.
+  if (panel && panel.open) return;
     var shouldShow = shouldShowStepsButton();
     wrap.classList.toggle('is-visible', shouldShow);
     if (shouldShow) {
@@ -3083,7 +3171,10 @@ function place(x,y,save){var p=bounds(x,y);wrap.style.setProperty('--v3-x',p.x+'
 function restore(){if(!wrap)return;var p;try{p=JSON.parse(localStorage.getItem('v3StepsPos')||'null')}catch(e){}if(p&&isFinite(p.x)&&isFinite(p.y))place(p.x,p.y,false)}
 function down(e){var panel=document.getElementById('samuelShowStepsAgainPanel');if(panel&&panel.classList.contains('is-open'))return;var r=wrap.getBoundingClientRect();drag={id:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top,sx:e.clientX,sy:e.clientY};moved=false;e.currentTarget.setPointerCapture&&e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault()}
 function move(e){if(!drag||e.pointerId!==drag.id)return;if(Math.abs(e.clientX-drag.sx)+Math.abs(e.clientY-drag.sy)>5)moved=true;place(e.clientX-drag.dx,e.clientY-drag.dy,false);e.preventDefault()}
-function up(e){if(!drag||e.pointerId!==drag.id)return;place(e.clientX-drag.dx,e.clientY-drag.dy,true);drag=null;e.preventDefault();if(!moved)setTimeout(function(){e.currentTarget.click()},0)}
+function up(e){if(!drag||e.pointerId!==drag.id)return;place(e.clientX-drag.dx,e.clientY-drag.dy,true);drag=null;e.preventDefault();if(!moved){
+  var tappedButton=e.currentTarget;
+  setTimeout(function(){tappedButton.click()},0);
+}}
 function initDrag(){wrap=document.getElementById('samuelShowStepsAgainWrap');var b=document.getElementById('samuelShowStepsAgainButton');if(!wrap||!b)return;if(b.dataset.v3Drag)return;b.dataset.v3Drag='1';b.addEventListener('pointerdown',down,true);b.addEventListener('pointermove',move,true);b.addEventListener('pointerup',up,true);b.addEventListener('pointercancel',up,true);restore()}
 function targetForTip(tip){var h=document.querySelector('.samuel-tutorial-highlight');if(h&&h.getBoundingClientRect().width)return h;var t=(tip.textContent||'').toLowerCase(),s='';if(/negrita/.test(t))s='[data-cmd="bold"]';else if(/cursiva/.test(t))s='[data-cmd="italic"]';else if(/subray/.test(t))s='[data-cmd="underline"]';else if(/viñeta|lista/.test(t))s='[data-cmd="insertUnorderedList"]';else if(/color/.test(t))s='[data-action="toggleTextPalette"]';return s?document.querySelector(s):null}
 function placeTips(){document.querySelectorAll('.samuel-tutorial-tip:not(.tip-inside-cell):not(.section2-table-tip)').forEach(function(tip){var target=targetForTip(tip);if(!target)return;var tr=target.getBoundingClientRect(),w=tip.offsetWidth||210,h=tip.offsetHeight||38,p=6,g=8;var left=Math.max(p,Math.min(tr.left+tr.width/2-w/2,innerWidth-w-p));var top=tr.top-h-g;if(top<p)top=tr.bottom+g;tip.style.setProperty('left',left+'px','important');tip.style.setProperty('top',top+'px','important');tip.style.setProperty('right','auto','important');tip.style.setProperty('bottom','auto','important')})}

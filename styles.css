@@ -1784,3 +1784,89 @@
   }
 }
 
+/* Ventana modal de pasos detallados */
+
+dialog#samuelShowStepsAgainPanel {
+  position: fixed !important;
+  inset: 0 !important;
+  transform: none !important;
+
+  width: calc(100% - 24px) !important;
+  max-width: 560px !important;
+
+  height: fit-content !important;
+  max-height: 85vh !important;
+  max-height: 85dvh !important;
+
+  margin: auto !important;
+  padding: 0 !important;
+
+  border: 1px solid rgba(42, 106, 255, .2) !important;
+  border-radius: 16px !important;
+
+  background: #fff !important;
+  color: #222 !important;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .3) !important;
+
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+dialog#samuelShowStepsAgainPanel:not([open]) {
+  display: none !important;
+}
+
+dialog#samuelShowStepsAgainPanel[open] {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+dialog#samuelShowStepsAgainPanel::backdrop {
+  background: rgba(15, 23, 42, .65);
+}
+
+dialog#samuelShowStepsAgainPanel .samuel-steps-header {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 12px 16px !important;
+}
+
+dialog#samuelShowStepsAgainPanel .samuel-steps-title {
+  font-size: 17px !important;
+  line-height: 1.3 !important;
+}
+
+dialog#samuelShowStepsAgainPanel .samuel-steps-close {
+  flex: 0 0 44px !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+
+  display: grid !important;
+  place-items: center !important;
+
+  font-size: 28px !important;
+  line-height: 1 !important;
+  touch-action: manipulation;
+}
+
+dialog#samuelShowStepsAgainPanel .samuel-steps-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  padding: 18px 22px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+}
+
+dialog#samuelShowStepsAgainPanel li {
+  margin-bottom: 14px !important;
+}
