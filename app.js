@@ -185,13 +185,130 @@ function exec(cmd, value = null) {
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=docName+'.pdf'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     status('PDF descargado: '+docName+'.pdf');
   }
-  function download(type){if(type==="pdf"){downloadPDF();return;}let blob,name;if(type==="txt"){blob=new Blob([text()],{type:"text/plain;charset=utf-8"});name=filename("txt")}else if(type==="json"){blob=new Blob([JSON.stringify({title:title.value,header:$("headerArea").innerHTML,html:editor.innerHTML,footer:$("footerArea").innerHTML,savedAt:new Date().toISOString()},null,2)],{type:"application/json"});name=filename("json")}else{blob=new Blob([htmlDoc()],{type:"text/html;charset=utf-8"});name=filename("html")}let url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);status("Archivo descargado: "+name)}
-  function save(){let payload={title:title.value,header:$("headerArea").innerHTML,html:editor.innerHTML,footer:$("footerArea").innerHTML,savedAt:new Date().toISOString()};localStorage.setItem(STORAGE,JSON.stringify(payload));$("infoSaved").textContent=new Date(payload.savedAt).toLocaleString();status("Guardado localmente")}
-  function openFile(file){if(!file)return;let r=new FileReader();r.onload=()=>{let c=String(r.result||"");try{if(file.name.endsWith(".json")){let p=JSON.parse(c);title.value=p.title||"Documento1 - Word";$("headerArea").innerHTML=p.header||"";editor.innerHTML=p.html||defaultHtml;$("footerArea").innerHTML=p.footer||""}else if(file.name.endsWith(".txt")){title.value=file.name.replace(/\.[^/.]+$/,'')+" - Word";editor.innerHTML="<p>"+escapeHtml(c).replace(/\n/g,"<br>")+"</p>"}else{title.value=file.name.replace(/\.[^/.]+$/,'')+" - Word";editor.innerHTML=c}sync();status("Archivo abierto: "+file.name)}catch(e){status("No se pudo abrir el archivo")}};r.readAsText(file)}
-  function sync(){let t=text(),w=t.trim()?t.trim().split(/\s+/).length:0,c=t.length,pages=Math.max(1,Math.ceil(editor.scrollHeight/940));$("words").textContent=w;$("chars").textContent=c;$("pages").textContent=pages;$("wordStatus").textContent=w+" palabras";$("pageStatus").textContent="Página 1 de "+pages;$("infoName").textContent=title.value;buildHeadings()}
-  function buildHeadings(){let list=$("headingList");list.innerHTML="";editor.querySelectorAll("h1,h2,h3").forEach((h,i)=>{let li=document.createElement("li");li.textContent=h.innerText||("Encabezado "+(i+1));li.onclick=()=>h.scrollIntoView({behavior:"smooth",block:"center"});list.appendChild(li)})}
-  function insertTable(){let r=Math.max(1,+prompt("Filas","3")||3),c=Math.max(1,+prompt("Columnas","3")||3),s='<table>';for(let i=0;i<r;i++){s+='<tr>';for(let j=0;j<c;j++)s+='<td><br></td>';s+='</tr>'}s+='</table><p><br></p>';exec('insertHTML',s)}
-  function insertImage(file){if(!file)return;let r=new FileReader();r.onload=()=>exec('insertHTML',`<img src="${r.result}" alt="Imagen insertada">`);r.readAsDataURL(file)}
+  function download(type)
+  {if(type==="pdf")
+    {downloadPDF();return;}
+    let blob,name;if(type==="txt")
+      {blob=new Blob([text()],{type:"text/plain;charset=utf-8"});name=filename("txt")}
+    else if(type==="json")
+      {blob=new Blob([JSON.stringify({title:title.value,header:$("headerArea").innerHTML,html:editor.innerHTML,footer:$("footerArea").innerHTML,savedAt:new Date().toISOString()},null,2)],{type:"application/json"});name=filename("json")
+  }else
+    {blob=new Blob([htmlDoc()],{type:"text/html;charset=utf-8"});name=filename("html")}
+    let url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);status("Archivo descargado: "+name)}
+
+
+  function save()
+  {let payload=
+    {title:title.value,header:$("headerArea").innerHTML,html:editor.innerHTML,footer:$("footerArea").innerHTML,savedAt:new Date().toISOString()};
+    localStorage.setItem(STORAGE,JSON.stringify(payload));$("infoSaved").textContent=new Date(payload.savedAt).toLocaleString();
+    status("Guardado localmente")}
+  function openFile(file)
+  {if(!file)return;
+    let r=new FileReader();
+    r.onload=()=>{let c=String(r.result||"");
+      try{if(file.name.endsWith(".json")){let p=JSON.parse(c);
+        title.value=p.title||"Documento1 - Word";$("headerArea").innerHTML=p.header||"";
+        editor.innerHTML=p.html||defaultHtml;$("footerArea").innerHTML=p.footer||""}
+        else if(file.name.endsWith(".txt")){title.value=file.name.replace(/\.[^/.]+$/,'')+" - Word";
+          editor.innerHTML="<p>"+escapeHtml(c).replace(/\n/g,"<br>")+"</p>"}
+          else{title.value=file.name.replace(/\.[^/.]+$/,'')+" - Word";
+            editor.innerHTML=c}sync();status("Archivo abierto: "+file.name)}catch(e){status("No se pudo abrir el archivo")}};r.readAsText(file)}
+
+  function sync()
+  {let t=text(),w=t.trim()?t.trim().split(/\s+/).length:0,c=t.length,pages=Math.max(1,Math.ceil(editor.scrollHeight/940));
+    $("words").textContent=w;
+    $("chars").textContent=c;
+    $("pages").textContent=pages;
+    $("wordStatus").textContent=w+" palabras";
+    $("pageStatus").textContent="Página 1 de "+pages;
+    $("infoName").textContent=title.value;
+    buildHeadings()}
+  function buildHeadings()
+  {let list=$("headingList");
+    list.innerHTML="";editor.querySelectorAll("h1,h2,h3").forEach((h,i)=>{let li=document.createElement("li");li.textContent=h.innerText
+      ||("Encabezado "+(i+1));li.onclick=()=>h.scrollIntoView({behavior:"smooth",block:"center"});list.appendChild(li)})}
+
+  function insertTable()
+  {let r=Math.max(1,+prompt("Filas","3")||3),c=Math.max(1,+prompt("Columnas","3")||3),s='<table>';
+    for(let i=0;i<r;i++){s+='<tr>';for(let j=0;j<c;j++)s+='<td><br></td>';s+='</tr>'}s+='</table><p><br></p>';
+    exec('insertHTML',s)}
+    
+function insertImage(file) {
+  if (!file) return;
+
+  const progress =
+    typeof window.__samuelGetTutorialProgress === "function"
+      ? window.__samuelGetTutorialProgress()
+      : null;
+
+  const section = Number(progress?.activeSection || 1);
+
+  const targetEditor = document.getElementById(
+    section === 1 ? "editor" : "editor" + section
+  );
+
+  if (!targetEditor) {
+    alert("No se encontró la hoja donde insertar la imagen.");
+    return;
+  }
+
+  const imageArea =
+    section === 3
+      ? targetEditor.querySelector(
+          '[data-samuel-role="section3-image-area"]'
+        ) || targetEditor
+      : targetEditor;
+
+  if (file.type && !file.type.startsWith("image/")) {
+    alert("Selecciona un archivo de imagen, como PNG o JPG.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onerror = function () {
+    alert("No se pudo leer el archivo. Intenta seleccionarlo otra vez.");
+  };
+
+  reader.onload = function () {
+    const image = new Image();
+
+    image.alt = "Captura de participación en el Foro de Bienvenida";
+
+    image.style.display = "block";
+    image.style.maxWidth = "100%";
+    image.style.height = "auto";
+    image.style.margin = "12px auto";
+
+    image.onerror = function () {
+      alert(
+        "El navegador no pudo abrir esta imagen. " +
+        "Intenta con una captura en formato PNG o JPG."
+      );
+    };
+
+    image.onload = function () {
+      if (!imageArea.isConnected) return;
+
+      // Inserta en la hoja correspondiente, sin depender
+      // de la selección que se pierde al abrir los archivos.
+      imageArea.appendChild(image);
+
+      targetEditor.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+
+      image.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+    };
+
+    image.src = String(reader.result);
+  };
+
+  reader.readAsDataURL(file);
+}
   function showModal(h,b){$("modalTitle").textContent=h;$("modalBody").innerHTML=b;modal.showModal()}
   function selectedText(){return String(window.getSelection()||"")}
   function replaceAll(){let f=($("findTextSide").value||$("findText").value),r=$("replaceText").value;if(!f)return;let esc=f.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");editor.innerHTML=editor.innerHTML.replace(new RegExp(esc,"gi"),escapeHtml(r));sync();status("Reemplazo aplicado")}
@@ -1115,7 +1232,7 @@ break;}}
     overlay.id = 'samuelTutorialCompleteOverlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#2A6AFF;">¡Felicidades!</span><br>Aprendiste a manipular fuentes, uso de color, aplicación de cursiva, creación de listas con viñetas y redacción sintética.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P2.mp3');
+    attachOverlayMouseAudio(overlay, 'audios/P2.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1186,7 +1303,7 @@ break;}}
     overlay.id = 'samuelTutorialSection2Overlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#FF7D01;">¡Bien hecho!</span><br>Hoy aprendiste a editar tablas en <span style="color:#2A6AFF;">Word</span>, organizar información en filas y columnas, y apropiarte del modelo flexible andragógico.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P3.mp3');
+    attachOverlayMouseAudio(overlay, 'audios/P3.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1275,7 +1392,7 @@ break;}}
     overlay.id = 'samuelTutorialSection3Overlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#FF7D01;">¡Buen trabajo!</span><br>Hoy aprendiste a insertar imágenes de manera correcta en <span style="color:#2A6AFF;">Word</span>, además de cumplir con la interacción en el Entorno Virtual de Aprendizaje.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P4.mp3');
+    attachOverlayMouseAudio(overlay, 'audios/P4.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1481,7 +1598,7 @@ height: 1
     overlay.id = 'samuelFinalDeliveryOverlay';
     overlay.innerHTML = '<div class="samuel-confetti-layer" aria-hidden="true"></div><div class="samuel-final-card"><p class="samuel-final-message">Regresa a tu curso de Inducción en <strong data-lexical-text="true" class="samuel-blue-text">Blackboard Ultra</strong>, entra al espacio correspondiente de la <strong data-lexical-text="true" class="samuel-orange-text">Actividad 1</strong>, adjunta tu archivo guardado y presiona el botón <strong data-lexical-text="true" class="samuel-white-text">Enviar</strong>.<em class="___11wyd0v f1j4dglz" data-lexical-text="true"> Tu tutor recibirá tu entrega y liberará tus primeros puntos de la calificación.</em></p><button class="samuel-exit-button" type="button">Salir</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P5.mp3');
+    attachOverlayMouseAudio(overlay, 'audios/P5.MP3');
     createSlowConfetti(overlay.querySelector('.samuel-confetti-layer'));
     var exitButton = overlay.querySelector('.samuel-exit-button');
     if (exitButton) {
@@ -1508,7 +1625,7 @@ height: 1
   }
 
   function playFinalSound() {
-    try { var sound = new Audio('audios/final.mp3'); sound.preload = 'auto'; sound.currentTime = 0; var promise = sound.play(); if (promise && promise.catch) promise.catch(function () {}); } catch (_) {}
+    try { var sound = new Audio('audios/final.MP3'); sound.preload = 'auto'; sound.currentTime = 0; var promise = sound.play(); if (promise && promise.catch) promise.catch(function () {}); } catch (_) {}
   }
   function showFinalDeliveryOverlay() {
     ensureFinalDeliveryOverlay();
@@ -2201,7 +2318,7 @@ height: 1
     overlay.id = 'samuelStartIntroOverlay';
     overlay.innerHTML = '<div class="samuel-start-card"><p class="samuel-start-message"><span style="color:#FF7D01;">¡Me entusiasma ver el avance de tu curso!</span><br>Este, es tu primer simulador de trabajo. A medida que completes cada sección, aprenderás a usar Word, organizar tu tiempo de estudio y desenvolverte en este ecosistema de aprendizaje. Al terminar, guardarás este archivo en formato PDF y lo subirás al espacio de la carpeta de evaluación correspondiente a la actividad 1.<br><span style="color:#2A6AFF;">¡Te deseo mucho éxito!</span></p><button class="samuel-start-button" type="button">Iniciar</button></div>';
     document.body.appendChild(overlay);
-    var introAudio = new Audio('audios/P1.mp3');
+    var introAudio = new Audio('audios/P1.MP3');
     introAudio.preload = 'auto';
     introAudio.loop = false;
     var introSoundBlocked = false;
@@ -2241,7 +2358,7 @@ height: 1
 
 ;/* ===== samuel-button-sound-js ===== */
 
-(function(){'use strict';if(window.__samuelButtonSoundInstalled)return;window.__samuelButtonSoundInstalled=true;function playButtonSound(){try{var sound=new Audio('audios/boton.mp3');sound.preload='auto';sound.currentTime=0;var promise=sound.play();if(promise&&promise.catch)promise.catch(function(){});}catch(_){}}document.addEventListener('click',function(event){var button=event.target&&event.target.closest?event.target.closest('button'):null;if(!button)return;playButtonSound();},false);})();
+(function(){'use strict';if(window.__samuelButtonSoundInstalled)return;window.__samuelButtonSoundInstalled=true;function playButtonSound(){try{var sound=new Audio('audios/boton.MP3');sound.preload='auto';sound.currentTime=0;var promise=sound.play();if(promise&&promise.catch)promise.catch(function(){});}catch(_){}}document.addEventListener('click',function(event){var button=event.target&&event.target.closest?event.target.closest('button'):null;if(!button)return;playButtonSound();},false);})();
 
 
 ;/* ===== samuel-progress-docx-update-js ===== */
