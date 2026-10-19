@@ -2127,3 +2127,18 @@ body #samuelTutorialFinishButton[hidden] {
     overflow-y: auto !important;
   }
 }
+
+/* Captura de la sección 3: conservar proporciones */
+
+#editor3 [data-samuel-role="section3-image-area"] img {
+  display: block !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  max-width: 100% !important;
+  max-height: 620px !important;
+
+  margin: 16px auto !important;
+  object-fit: contain !important;
+}

@@ -232,7 +232,7 @@ function exec(cmd, value = null) {
   {let r=Math.max(1,+prompt("Filas","3")||3),c=Math.max(1,+prompt("Columnas","3")||3),s='<table>';
     for(let i=0;i<r;i++){s+='<tr>';for(let j=0;j<c;j++)s+='<td><br></td>';s+='</tr>'}s+='</table><p><br></p>';
     exec('insertHTML',s)}
-    
+
 function insertImage(file) {
   if (!file) return;
 
@@ -825,9 +825,16 @@ break;}}
       table.style.setProperty('table-layout', 'fixed', 'important');
     });
     clone.querySelectorAll('img').forEach(function (img) {
-      img.style.setProperty('max-width', '100%', 'important');
-      img.style.setProperty('height', 'auto', 'important');
-    });
+  img.style.setProperty('display', 'block', 'important');
+  img.style.setProperty('width', 'auto', 'important');
+  img.style.setProperty('height', 'auto', 'important');
+
+  img.style.setProperty('max-width', '100%', 'important');
+  img.style.setProperty('max-height', '620px', 'important');
+
+  img.style.setProperty('margin', '16px auto', 'important');
+  img.style.setProperty('object-fit', 'contain', 'important');
+});
 
     var serialized = new XMLSerializer().serializeToString(clone);
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
@@ -1232,7 +1239,7 @@ break;}}
     overlay.id = 'samuelTutorialCompleteOverlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#2A6AFF;">¡Felicidades!</span><br>Aprendiste a manipular fuentes, uso de color, aplicación de cursiva, creación de listas con viñetas y redacción sintética.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P2.MP3');
+    attachOverlayMouseAudio(overlay, 'Audios/P2.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1303,7 +1310,7 @@ break;}}
     overlay.id = 'samuelTutorialSection2Overlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#FF7D01;">¡Bien hecho!</span><br>Hoy aprendiste a editar tablas en <span style="color:#2A6AFF;">Word</span>, organizar información en filas y columnas, y apropiarte del modelo flexible andragógico.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P3.MP3');
+    attachOverlayMouseAudio(overlay, 'Audios/P3.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1392,7 +1399,7 @@ break;}}
     overlay.id = 'samuelTutorialSection3Overlay';
     overlay.innerHTML = '<div class="samuel-complete-card"><p class="samuel-complete-title"><span style="color:#FF7D01;">¡Buen trabajo!</span><br>Hoy aprendiste a insertar imágenes de manera correcta en <span style="color:#2A6AFF;">Word</span>, además de cumplir con la interacción en el Entorno Virtual de Aprendizaje.</p><button class="samuel-next-button" type="button">Pasar a la siguiente sección</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P4.MP3');
+    attachOverlayMouseAudio(overlay, 'Audios/P4.MP3');
     var nextButton = overlay.querySelector('.samuel-next-button');
     if (nextButton) {
       nextButton.addEventListener('click', function () {
@@ -1598,7 +1605,7 @@ height: 1
     overlay.id = 'samuelFinalDeliveryOverlay';
     overlay.innerHTML = '<div class="samuel-confetti-layer" aria-hidden="true"></div><div class="samuel-final-card"><p class="samuel-final-message">Regresa a tu curso de Inducción en <strong data-lexical-text="true" class="samuel-blue-text">Blackboard Ultra</strong>, entra al espacio correspondiente de la <strong data-lexical-text="true" class="samuel-orange-text">Actividad 1</strong>, adjunta tu archivo guardado y presiona el botón <strong data-lexical-text="true" class="samuel-white-text">Enviar</strong>.<em class="___11wyd0v f1j4dglz" data-lexical-text="true"> Tu tutor recibirá tu entrega y liberará tus primeros puntos de la calificación.</em></p><button class="samuel-exit-button" type="button">Salir</button></div>';
     document.body.appendChild(overlay);
-    attachOverlayMouseAudio(overlay, 'audios/P5.MP3');
+    attachOverlayMouseAudio(overlay, 'Audios/P5.MP3');
     createSlowConfetti(overlay.querySelector('.samuel-confetti-layer'));
     var exitButton = overlay.querySelector('.samuel-exit-button');
     if (exitButton) {
@@ -1625,7 +1632,7 @@ height: 1
   }
 
   function playFinalSound() {
-    try { var sound = new Audio('audios/final.MP3'); sound.preload = 'auto'; sound.currentTime = 0; var promise = sound.play(); if (promise && promise.catch) promise.catch(function () {}); } catch (_) {}
+    try { var sound = new Audio('Audios/final.MP3'); sound.preload = 'auto'; sound.currentTime = 0; var promise = sound.play(); if (promise && promise.catch) promise.catch(function () {}); } catch (_) {}
   }
   function showFinalDeliveryOverlay() {
     ensureFinalDeliveryOverlay();
@@ -2318,7 +2325,7 @@ height: 1
     overlay.id = 'samuelStartIntroOverlay';
     overlay.innerHTML = '<div class="samuel-start-card"><p class="samuel-start-message"><span style="color:#FF7D01;">¡Me entusiasma ver el avance de tu curso!</span><br>Este, es tu primer simulador de trabajo. A medida que completes cada sección, aprenderás a usar Word, organizar tu tiempo de estudio y desenvolverte en este ecosistema de aprendizaje. Al terminar, guardarás este archivo en formato PDF y lo subirás al espacio de la carpeta de evaluación correspondiente a la actividad 1.<br><span style="color:#2A6AFF;">¡Te deseo mucho éxito!</span></p><button class="samuel-start-button" type="button">Iniciar</button></div>';
     document.body.appendChild(overlay);
-    var introAudio = new Audio('audios/P1.MP3');
+    var introAudio = new Audio('Audios/P1.MP3');
     introAudio.preload = 'auto';
     introAudio.loop = false;
     var introSoundBlocked = false;
@@ -2358,7 +2365,7 @@ height: 1
 
 ;/* ===== samuel-button-sound-js ===== */
 
-(function(){'use strict';if(window.__samuelButtonSoundInstalled)return;window.__samuelButtonSoundInstalled=true;function playButtonSound(){try{var sound=new Audio('audios/boton.MP3');sound.preload='auto';sound.currentTime=0;var promise=sound.play();if(promise&&promise.catch)promise.catch(function(){});}catch(_){}}document.addEventListener('click',function(event){var button=event.target&&event.target.closest?event.target.closest('button'):null;if(!button)return;playButtonSound();},false);})();
+(function(){'use strict';if(window.__samuelButtonSoundInstalled)return;window.__samuelButtonSoundInstalled=true;function playButtonSound(){try{var sound=new Audio('Audios/boton.MP3');sound.preload='auto';sound.currentTime=0;var promise=sound.play();if(promise&&promise.catch)promise.catch(function(){});}catch(_){}}document.addEventListener('click',function(event){var button=event.target&&event.target.closest?event.target.closest('button'):null;if(!button)return;playButtonSound();},false);})();
 
 
 ;/* ===== samuel-progress-docx-update-js ===== */
