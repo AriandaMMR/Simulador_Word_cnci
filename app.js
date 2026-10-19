@@ -6,7 +6,90 @@
   let zoom = 100, copiedFormat = null, tracking = false;
 
   function status(t){$("status").textContent=t}
-  function exec(cmd, value=null){editor.focus();document.execCommand(cmd,false,value);sync()}
+  
+  // Conserva la selección del documento al tocar herramientas.
+let savedEditorRange = null;
+
+function rememberEditorSelection() {
+  const selection = window.getSelection();
+
+  if (!selection || !selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  // Evita reemplazar la selección por un cursor colapsado
+  // cuando el teclado o una herramienta toman el foco.
+  if (
+    selection.isCollapsed &&
+    document.activeElement !== editor
+  ) {
+    return;
+  }
+
+  savedEditorRange = range.cloneRange();
+}
+
+document.addEventListener(
+  "selectionchange",
+  rememberEditorSelection
+);
+
+function preserveSelectionOnToolbar(event) {
+  if (!(event.target instanceof Element)) return;
+
+  const button = event.target.closest(
+    ".ribbon-shell button, #textPalette button"
+  );
+
+  if (!button) return;
+
+  rememberEditorSelection();
+
+  // Evita que el botón quite el foco antes de aplicar formato.
+  if (
+    savedEditorRange &&
+    savedEditorRange.startContainer.isConnected &&
+    savedEditorRange.endContainer.isConnected
+  ) {
+    event.preventDefault();
+  }
+}
+
+document.addEventListener(
+  "pointerdown",
+  preserveSelectionOnToolbar,
+  { capture: true, passive: false }
+);
+
+document.addEventListener(
+  "mousedown",
+  preserveSelectionOnToolbar,
+  true
+);
+
+function exec(cmd, value = null) {
+  editor.focus({ preventScroll: true });
+
+  if (
+    savedEditorRange &&
+    savedEditorRange.startContainer.isConnected &&
+    savedEditorRange.endContainer.isConnected &&
+    editor.contains(savedEditorRange.commonAncestorContainer)
+  ) {
+    const selection = window.getSelection();
+
+    selection.removeAllRanges();
+    selection.addRange(savedEditorRange.cloneRange());
+  }
+
+  document.execCommand(cmd, false, value);
+
+  rememberEditorSelection();
+  sync();
+}
+
   function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
   function text(){return editor.innerText || ""}
   function htmlDoc(){return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${escapeHtml(title.value)}</title><style>body{background:#ddd;font-family:Aptos,Calibri,Arial}.page{width:816px;min-height:1056px;background:#fff;margin:30px auto;padding:96px;box-shadow:0 4px 18px #777}table{border-collapse:collapse;width:100%}td,th{border:1px solid #333;padding:7px}img{max-width:100%}</style></head><body><main class="page">${editor.innerHTML}</main></body></html>`}
@@ -250,7 +333,180 @@
       document.querySelectorAll('[data-spell-ignore]').forEach(btn=>btn.onclick=()=>{const it=issues[+btn.dataset.spellIgnore];ignoredWords.add(it.key);modal.close();openSpellingPanel();});
     },0);
   }
-  function doAction(a){switch(a){case"open":$("fileOpen").click();break;case"save":save();break;case"print":window.print();break;case"new":title.value="Documento1 - Word";$("headerArea").innerHTML="";$("footerArea").innerHTML="";editor.innerHTML=defaultHtml;applyLineSpacing("1.5");sync();status("Nuevo documento en blanco");break;case"closeBackstage":backstage.hidden=true;break;case"toggleTextPalette":$("textPalette").hidden=!$("textPalette").hidden;$("highlightPalette").hidden=true;break;case"toggleHighlightPalette":$("highlightPalette").hidden=!$("highlightPalette").hidden;$("textPalette").hidden=true;break;case"copyFormat":copiedFormat=document.queryCommandValue("fontName")+"|"+document.queryCommandValue("fontSize");status("Formato copiado de forma simulada");break;case"growFont":exec("fontSize",5);break;case"shrinkFont":exec("fontSize",2);break;case"changeCase":exec("insertText",selectedText().toUpperCase());break;case"subscript":exec("subscript");break;case"superscript":exec("superscript");break;case"multilevel":exec("insertHTML","<ol><li>Elemento<ol><li>Subelemento</li></ol></li></ol>");break;case"sort":let arr=text().split(/\n+/).sort();editor.innerHTML=arr.map(x=>`<p>${escapeHtml(x)}</p>`).join("");sync();break;case"showMarks":document.body.classList.toggle("show-marks");status("Marcas de párrafo simuladas");break;case"lineHeight":applyLineSpacing("1.5");break;case"shading":exec("backColor","#eaf2ff");break;case"borders":exec("insertHTML",`<div style="border:1px solid #333;padding:8px">${selectedText()||"Texto con borde"}</div>`);break;case"find":find();break;case"replace":showModal("Buscar y reemplazar",`<label>Buscar</label><input id="mFind" style="width:100%;margin:8px 0" value="${escapeHtml($("findText").value||"")}"><label>Reemplazar con</label><input id="mRep" style="width:100%;margin:8px 0"><button type="button" onclick="document.getElementById('findTextSide').value=document.getElementById('mFind').value;document.getElementById('replaceText').value=document.getElementById('mRep').value;document.getElementById('btnReplaceAll').click();document.querySelector('dialog').close();">Reemplazar todo</button>`);break;case"selectAll":exec("selectAll");break;case"addins":showModal("Complementos", "<p>Panel simulado de complementos, similar al grupo Complementos de Word.</p>");break;case"cover":exec("insertHTML","<section style='text-align:center;padding:180px 20px'><h1>Portada</h1><p>Autor y fecha</p></section><hr style='page-break-after:always'>");break;case"blankPage":exec("insertHTML","<hr style='page-break-after:always'><p><br></p>");break;case"pageBreak":exec("insertHTML","<hr style='page-break-after:always;border:0;border-top:2px dashed #aaa;margin:32px 0'>");break;case"table":insertTable();break;case"image":$("imageOpen").click();break;case"shapes":exec("insertHTML","<div style='width:130px;height:80px;border-radius:50%;border:2px solid #333'></div>");break;case"icons":exec("insertHTML","<span style='font-size:42px'>★</span>");break;case"smartArt":exec("insertHTML","<div style='display:flex;gap:12px;align-items:center'><div style='background:#dbeafe;padding:16px;border-radius:10px'>Idea</div>→<div style='background:#dcfce7;padding:16px;border-radius:10px'>Proceso</div>→<div style='background:#fee2e2;padding:16px;border-radius:10px'>Resultado</div></div>");break;case"chart":exec("insertHTML","<div style='display:flex;align-items:end;gap:8px;height:140px'><div style='height:60px;background:#60a5fa;width:50px'></div><div style='height:110px;background:#2563eb;width:50px'></div><div style='height:80px;background:#93c5fd;width:50px'></div></div>");break;case"link":let url=prompt("URL","https://");if(url)exec("createLink",url);break;case"bookmark":exec("insertHTML","<a id='marcador'></a>");break;case"header":$("headerArea").focus();break;case"footer":$("footerArea").focus();break;case"pageNumber":$("footerArea").innerHTML="Página 1";break;case"textBox":exec("insertHTML","<div class='textbox' contenteditable='true'>Cuadro de texto</div>");break;case"wordArt":exec("insertHTML","<div style='font-size:42px;font-weight:bold;color:#1d4ed8;text-shadow:2px 2px #bfdbfe'>WordArt</div>");break;case"date":exec("insertHTML",new Date().toLocaleString());break;case"watermark":if(!page.querySelector('.watermark')){let w=document.createElement('div');w.className='watermark';w.textContent='BORRADOR';page.appendChild(w)}break;case"pageColor":page.style.background=page.style.background==="rgb(255, 250, 230)"?"#fff":"#fffae6";break;case"pageBorder":page.style.outline=page.style.outline?"":"3px double #333";break;case"margins":editor.style.padding="56px 72px";status("Márgenes moderados aplicados");break;case"orientation":page.classList.toggle("landscape");if(page.classList.contains("landscape")){page.style.width="1056px";page.style.minHeight="816px"}else{page.style.width="816px";page.style.minHeight="1056px"}break;case"size":showModal("Tamaño de página","<p>Simulación: carta/A4 visual en pantalla.</p>");break;case"columns":exec("insertHTML","<div style='columns:2;column-gap:36px'><p>Texto en columnas. Escribe aquí para simular la opción Columnas de Word.</p><p>Segunda columna del bloque.</p></div>");break;case"breaks":doAction("pageBreak");break;case"indentLeft":exec("indent");break;case"indentRight":exec("outdent");break;case"spacingBefore":exec("insertHTML","<p style='margin-top:28px'>Párrafo con espacio antes</p>");break;case"spacingAfter":exec("insertHTML","<p style='margin-bottom:28px'>Párrafo con espacio después</p>");break;case"position":status("Posición simulada: selecciona imágenes y usa ajustar texto visualmente");break;case"wrapText":exec("insertHTML","<div style='float:right;width:160px;border:1px solid #aaa;padding:8px;margin:8px'>Objeto con ajuste de texto</div>");break;case"bringFront":status("Traer adelante simulado");break;case"sendBack":status("Enviar atrás simulado");break;case"toc":let hs=[...editor.querySelectorAll('h1,h2,h3')].map(h=>`<li>${escapeHtml(h.innerText)}</li>`).join('');exec("insertHTML",`<h2>Tabla de contenido</h2><ol>${hs||'<li>Agrega títulos para generar contenido</li>'}</ol>`);break;case"addText":exec("formatBlock","h2");break;case"footnote":exec("insertHTML","<sup>[1]</sup><p style='font-size:12px'>[1] Nota al pie simulada.</p>");break;case"endnote":exec("insertHTML","<p style='font-size:12px'>Nota al final simulada.</p>");break;case"citation":exec("insertHTML","<span>(Autor, 2026)</span>");break;case"bibliography":exec("insertHTML","<h2>Bibliografía</h2><p>Autor. Título. Editorial, 2026.</p>");break;case"caption":exec("insertHTML","<p style='font-size:12px;text-align:center'>Figura 1. Título de imagen</p>");break;case"index":exec("insertHTML","<p><b>Entrada de índice:</b> "+escapeHtml(selectedText()||"término")+"</p>");break;case"envelopes":showModal("Sobres","<p>Herramienta de sobres simulada.</p>");break;case"labels":showModal("Etiquetas","<p>Herramienta de etiquetas simulada.</p>");break;case"startMerge":status("Combinación de correspondencia iniciada");break;case"recipients":showModal("Destinatarios","<textarea>Nombre,Correo\nSamuel,samuel@example.com</textarea>");break;case"insertMergeField":exec("insertHTML","«Nombre»");break;case"previewResults":status("Vista previa de resultados simulada");break;case"finishMerge":status("Combinación finalizada de forma simulada");break;case"spelling":openSpellingPanel();break;case"spellCheckNow":openSpellingPanel();break;case"clearSpellingMarks":clearSpellingMarks();break;case"thesaurus":showModal("Sinónimos","<p>Selecciona una palabra para consultar sinónimos de forma simulada.</p>");break;case"wordCount":showModal("Contar palabras",`<p>Palabras: ${$("words").textContent}</p><p>Caracteres: ${$("chars").textContent}</p>`);break;case"comment":exec("insertHTML","<aside class='comment'>Comentario: escribe aquí.</aside>");break;case"deleteComments":editor.querySelectorAll('.comment').forEach(x=>x.remove());sync();break;case"trackChanges":tracking=!tracking;status("Control de cambios "+(tracking?"activado":"desactivado"));break;case"acceptChange":status("Cambio aceptado de forma simulada");break;case"rejectChange":status("Cambio rechazado de forma simulada");break;case"protect":editor.contentEditable=editor.contentEditable==="false"?"true":"false";status(editor.contentEditable==="false"?"Edición restringida":"Edición habilitada");break;case"zoomOut":applyZoom(zoom-10);break;case"zoomIn":applyZoom(zoom+10);break;case"zoom100":applyZoom(100);break;case"onePage":applyZoom(75);break;case"preview":showModal("Vista previa",`<div style='width:100%;max-height:65vh;overflow:auto;background:#ddd;padding:20px'><div style='background:#fff;margin:auto;max-width:816px;padding:50px'>${editor.innerHTML}</div></div>`);break;case"newWindow":window.open(location.href,"_blank");break;case"split":status("Dividir ventana simulado");break;case"help":showModal("Ayuda","<p>Usa las pestañas de la cinta para encontrar las herramientas, igual que en Word.</p>");break;case"training":showModal("Aprendizaje","<p>Prueba Inicio para formato, Insertar para objetos y Vista para zoom.</p>");break;case"feedback":showModal("Comentarios","<p>Simulación de comentarios de la aplicación.</p>");break;case"paraphrase":exec("insertHTML","<p><b>Paráfrasis simulada:</b> "+escapeHtml(selectedText()||"Selecciona texto para parafrasear.")+"</p>");break;case"summarize":showModal("Resumen",`<p>${escapeHtml(text().split(/\s+/).slice(0,40).join(" "))}...</p>`);break;case"grammar":showModal("Gramática","<p>Revisión gramatical simulada completada.</p>");break;}}
+  function doAction(a){switch(a)
+    {case"open":$("fileOpen").click();
+      break;case"save":save();
+      break;case"print":window.print();
+      break;case"new":title.value="Documento1 - Word";$("headerArea").innerHTML="";$("footerArea").innerHTML="";editor.innerHTML=defaultHtml;applyLineSpacing("1.5");sync();status("Nuevo documento en blanco");
+      break;case"closeBackstage":backstage.hidden=true;
+      break;case "toggleTextPalette": {
+  const palette = $("textPalette");
+  const highlightPalette = $("highlightPalette");
+
+  if (palette) {
+    palette.hidden = !palette.hidden;
+  }
+
+  if (highlightPalette) {
+    highlightPalette.hidden = true;
+  }
+
+  break;
+}
+case"toggleHighlightPalette":$("highlightPalette").hidden=!$("highlightPalette").hidden;$("textPalette").hidden=true;break;case"copyFormat":copiedFormat=document.queryCommandValue("fontName")+"|"+document.queryCommandValue("fontSize");status("Formato copiado de forma simulada");
+break;
+case"growFont":exec("fontSize",5);break;case"shrinkFont":exec("fontSize",2);
+break;
+case"changeCase":exec("insertText",selectedText().toUpperCase());
+break;
+case"subscript":exec("subscript");
+break;
+case"superscript":exec("superscript");
+break;
+case"multilevel":exec("insertHTML","<ol><li>Elemento<ol><li>Subelemento</li></ol></li></ol>");
+break;
+case"sort":let arr=text().split(/\n+/).sort();editor.innerHTML=arr.map(x=>`<p>${escapeHtml(x)}</p>`).join("");sync();
+break;
+case"showMarks":document.body.classList.toggle("show-marks");status("Marcas de párrafo simuladas");
+break;
+case"lineHeight":applyLineSpacing("1.5");break;case"shading":exec("backColor","#eaf2ff");
+break;
+case"borders":exec("insertHTML",`<div style="border:1px solid #333;padding:8px">${selectedText()||"Texto con borde"}</div>`);
+break;
+case"find":find();
+break;
+case"replace":showModal("Buscar y reemplazar",`<label>Buscar</label><input id="mFind" style="width:100%;margin:8px 0" value="${escapeHtml($("findText").value||"")}"><label>Reemplazar con</label><input id="mRep" style="width:100%;margin:8px 0"><button type="button" onclick="document.getElementById('findTextSide').value=document.getElementById('mFind').value;document.getElementById('replaceText').value=document.getElementById('mRep').value;document.getElementById('btnReplaceAll').click();document.querySelector('dialog').close();">Reemplazar todo</button>`);
+break;
+case"selectAll":exec("selectAll");
+break;
+case"addins":showModal("Complementos", "<p>Panel simulado de complementos, similar al grupo Complementos de Word.</p>");
+break;
+case"cover":exec("insertHTML","<section style='text-align:center;padding:180px 20px'><h1>Portada</h1><p>Autor y fecha</p></section><hr style='page-break-after:always'>");
+break;
+case"blankPage":exec("insertHTML","<hr style='page-break-after:always'><p><br></p>");
+break;
+case"pageBreak":exec("insertHTML","<hr style='page-break-after:always;border:0;border-top:2px dashed #aaa;margin:32px 0'>");
+break;
+case"table":insertTable();break;case"image":$("imageOpen").click();break;case"shapes":exec("insertHTML","<div style='width:130px;height:80px;border-radius:50%;border:2px solid #333'></div>");
+break;
+case"icons":exec("insertHTML","<span style='font-size:42px'>★</span>");
+break;
+case"smartArt":exec("insertHTML","<div style='display:flex;gap:12px;align-items:center'><div style='background:#dbeafe;padding:16px;border-radius:10px'>Idea</div>→<div style='background:#dcfce7;padding:16px;border-radius:10px'>Proceso</div>→<div style='background:#fee2e2;padding:16px;border-radius:10px'>Resultado</div></div>");
+break;
+case"chart":exec("insertHTML","<div style='display:flex;align-items:end;gap:8px;height:140px'><div style='height:60px;background:#60a5fa;width:50px'></div><div style='height:110px;background:#2563eb;width:50px'></div><div style='height:80px;background:#93c5fd;width:50px'></div></div>");
+break;
+case"link":let url=prompt("URL","https://");if(url)exec("createLink",url);break;case"bookmark":exec("insertHTML","<a id='marcador'></a>");
+break;
+case"header":$("headerArea").focus();break;case"footer":$("footerArea").focus();
+break;
+case"pageNumber":$("footerArea").innerHTML="Página 1";
+break;
+case"textBox":exec("insertHTML","<div class='textbox' contenteditable='true'>Cuadro de texto</div>");
+break;
+case"wordArt":exec("insertHTML","<div style='font-size:42px;font-weight:bold;color:#1d4ed8;text-shadow:2px 2px #bfdbfe'>WordArt</div>");
+break;
+case"date":exec("insertHTML",new Date().toLocaleString());break;case"watermark":if(!page.querySelector('.watermark')){let w=document.createElement('div');w.className='watermark';w.textContent='BORRADOR';page.appendChild(w)}
+break;
+case"pageColor":page.style.background=page.style.background==="rgb(255, 250, 230)"?"#fff":"#fffae6";
+break;
+case"pageBorder":page.style.outline=page.style.outline?"":"3px double #333";break;case"margins":editor.style.padding="56px 72px";status("Márgenes moderados aplicados");
+break;
+case"orientation":page.classList.toggle("landscape");if(page.classList.contains("landscape")){page.style.width="1056px";page.style.minHeight="816px"}else{page.style.width="816px";page.style.minHeight="1056px"}
+break;
+case"size":showModal("Tamaño de página","<p>Simulación: carta/A4 visual en pantalla.</p>");
+break;
+case"columns":exec("insertHTML","<div style='columns:2;column-gap:36px'><p>Texto en columnas. Escribe aquí para simular la opción Columnas de Word.</p><p>Segunda columna del bloque.</p></div>");
+break;
+case"breaks":doAction("pageBreak");break;case"indentLeft":exec("indent");
+break;
+case"indentRight":exec("outdent");
+break;
+case"spacingBefore":exec("insertHTML","<p style='margin-top:28px'>Párrafo con espacio antes</p>");
+break;
+case"spacingAfter":exec("insertHTML","<p style='margin-bottom:28px'>Párrafo con espacio después</p>");
+break;
+case"position":status("Posición simulada: selecciona imágenes y usa ajustar texto visualmente");
+break;
+case"wrapText":exec("insertHTML","<div style='float:right;width:160px;border:1px solid #aaa;padding:8px;margin:8px'>Objeto con ajuste de texto</div>");
+break;
+case"bringFront":status("Traer adelante simulado");
+break;
+case"sendBack":status("Enviar atrás simulado");
+break;
+case"toc":let hs=[...editor.querySelectorAll('h1,h2,h3')].map(h=>`<li>${escapeHtml(h.innerText)}</li>`).join('');exec("insertHTML",`<h2>Tabla de contenido</h2><ol>${hs||'<li>Agrega títulos para generar contenido</li>'}</ol>`);
+break;
+case"addText":exec("formatBlock","h2");
+break;
+case"footnote":exec("insertHTML","<sup>[1]</sup><p style='font-size:12px'>[1] Nota al pie simulada.</p>");
+break;
+case"endnote":exec("insertHTML","<p style='font-size:12px'>Nota al final simulada.</p>");
+break;
+case"citation":exec("insertHTML","<span>(Autor, 2026)</span>");
+break;
+case"bibliography":exec("insertHTML","<h2>Bibliografía</h2><p>Autor. Título. Editorial, 2026.</p>");
+break;
+case"caption":exec("insertHTML","<p style='font-size:12px;text-align:center'>Figura 1. Título de imagen</p>");
+break;
+case"index":exec("insertHTML","<p><b>Entrada de índice:</b> "+escapeHtml(selectedText()||"término")+"</p>");
+break;
+case"envelopes":showModal("Sobres","<p>Herramienta de sobres simulada.</p>");
+break;
+case"labels":showModal("Etiquetas","<p>Herramienta de etiquetas simulada.</p>");
+break;
+case"startMerge":status("Combinación de correspondencia iniciada");
+break;
+case"recipients":showModal("Destinatarios","<textarea>Nombre,Correo\nSamuel,samuel@example.com</textarea>");
+break;
+case"insertMergeField":exec("insertHTML","«Nombre»");break;case"previewResults":status("Vista previa de resultados simulada");
+break;
+case"finishMerge":status("Combinación finalizada de forma simulada");break;case"spelling":openSpellingPanel();
+break;
+case"spellCheckNow":openSpellingPanel();
+break;
+case"clearSpellingMarks":clearSpellingMarks();
+break;
+case"thesaurus":showModal("Sinónimos","<p>Selecciona una palabra para consultar sinónimos de forma simulada.</p>");
+break;
+case"wordCount":showModal("Contar palabras",`<p>Palabras: ${$("words").textContent}</p><p>Caracteres: ${$("chars").textContent}</p>`);
+break;
+case"comment":exec("insertHTML","<aside class='comment'>Comentario: escribe aquí.</aside>");
+break;
+case"deleteComments":editor.querySelectorAll('.comment').forEach(x=>x.remove());sync();
+break;
+case"trackChanges":tracking=!tracking;status("Control de cambios "+(tracking?"activado":"desactivado"));
+break;
+case"acceptChange":status("Cambio aceptado de forma simulada");
+break;
+case"rejectChange":status("Cambio rechazado de forma simulada");
+break;
+case"protect":editor.contentEditable=editor.contentEditable==="false"?"true":"false";status(editor.contentEditable==="false"?"Edición restringida":"Edición habilitada");
+break;
+case"zoomOut":applyZoom(zoom-10);
+break;
+case"zoomIn":applyZoom(zoom+10);
+break;
+case"zoom100":applyZoom(100);
+break;
+case"onePage":applyZoom(75);
+break;
+case"preview":showModal("Vista previa",`<div style='width:100%;max-height:65vh;overflow:auto;background:#ddd;padding:20px'><div style='background:#fff;margin:auto;max-width:816px;padding:50px'>${editor.innerHTML}</div></div>`);
+break;
+case"newWindow":window.open(location.href,"_blank");
+break;
+case"split":status("Dividir ventana simulado");
+break;
+case"help":showModal("Ayuda","<p>Usa las pestañas de la cinta para encontrar las herramientas, igual que en Word.</p>");
+break;
+case"training":showModal("Aprendizaje","<p>Prueba Inicio para formato, Insertar para objetos y Vista para zoom.</p>");
+break;
+case"feedback":showModal("Comentarios","<p>Simulación de comentarios de la aplicación.</p>");
+break;
+case"paraphrase":exec("insertHTML","<p><b>Paráfrasis simulada:</b> "+escapeHtml(selectedText()||"Selecciona texto para parafrasear.")+"</p>");
+break;
+case"summarize":showModal("Resumen",`<p>${escapeHtml(text().split(/\s+/).slice(0,40).join(" "))}...</p>`);
+break;
+case"grammar":showModal("Gramática","<p>Revisión gramatical simulada completada.</p>");
+break;}}
 
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.tab==="archivo"){backstage.hidden=false;return}document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.ribbon').forEach(x=>x.classList.remove('active'));$("tab-"+b.dataset.tab)?.classList.add('active')});
   document.querySelectorAll("[data-backstage]").forEach(b=>b.addEventListener('click',()=>{
@@ -3111,7 +3367,7 @@ height: 1
   window.addEventListener('resize', updateMobileLayout, { passive: true });
   window.addEventListener('orientationchange', function () { setTimeout(updateMobileLayout, 180); }, { passive: true });
   document.addEventListener('click', keepActiveControlsVisible, true);
-  document.addEventListener('focusin', focusEditable, true);
+ 
   if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', updateMobileLayout);
   else if (mobileQuery.addListener) mobileQuery.addListener(updateMobileLayout);
 })();
@@ -3748,4 +4004,66 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       stepsButton.click();
     }, 0);
   }, true);
+})();
+
+/* Ajustar el simulador al espacio visible con el teclado abierto */
+
+(function () {
+  "use strict";
+
+  let pendingFrame = null;
+
+  function updateVisibleViewport() {
+    pendingFrame = null;
+
+    const viewport = window.visualViewport;
+
+    const height = viewport
+      ? viewport.height
+      : window.innerHeight;
+
+    const top = viewport
+      ? viewport.offsetTop
+      : 0;
+
+    document.documentElement.style.setProperty(
+      "--word-visible-height",
+      height + "px"
+    );
+
+    document.documentElement.style.setProperty(
+      "--word-visible-top",
+      top + "px"
+    );
+  }
+
+  function scheduleViewportUpdate() {
+    if (pendingFrame !== null) return;
+
+    pendingFrame = requestAnimationFrame(
+      updateVisibleViewport
+    );
+  }
+
+  updateVisibleViewport();
+
+  window.addEventListener(
+    "resize",
+    scheduleViewportUpdate,
+    { passive: true }
+  );
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener(
+      "resize",
+      scheduleViewportUpdate,
+      { passive: true }
+    );
+
+    window.visualViewport.addEventListener(
+      "scroll",
+      scheduleViewportUpdate,
+      { passive: true }
+    );
+  }
 })();

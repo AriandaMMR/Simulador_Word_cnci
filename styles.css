@@ -2086,3 +2086,44 @@ body #samuelTutorialFinishButton.v3-phase2-finish:not([hidden]) {
 body #samuelTutorialFinishButton[hidden] {
   display: none !important;
 }
+/* Mantener las herramientas dentro del área visible en móvil */
+
+@media (max-width: 1024px),
+       (hover: none) and (pointer: coarse) {
+
+  .word-app {
+    position: fixed !important;
+
+    top: var(--word-visible-top, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+
+    width: 100% !important;
+    height: var(--word-visible-height, 100dvh) !important;
+
+    min-height: 0 !important;
+    max-height: var(--word-visible-height, 100dvh) !important;
+
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .ribbon-shell {
+    position: relative !important;
+    top: auto !important;
+
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+  }
+
+  .document-workspace {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+  }
+
+  .document-workspace > .canvas-wrap {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+}
