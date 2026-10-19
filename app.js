@@ -746,10 +746,17 @@ break;}}
       if (clone.dataset.generating === '1') return;
       clone.dataset.generating = '1';
       generatePdfFromWorkingSheet()
-        .catch(function (error) {
-          console.error(error);
-          fallbackPdfFromHtmlText(error);
-        })
+       .catch(function (error) {
+  console.error(error);
+
+  setStatus("No se pudo generar el PDF completo.");
+
+  alert(
+    "No se pudo generar el PDF con todas las imágenes. " +
+    "Tu trabajo sigue en el simulador. " +
+    "Intenta descargarlo otra vez."
+  );
+})
         .finally(function () {
           clone.dataset.generating = '0';
           clone.selectedIndex = -1;
@@ -783,6 +790,80 @@ break;}}
     downloadBlob(blob, getDocumentName() + '.pdf');
     setStatus('PDF descargado con ' + pages.length + ' secciones: ' + getDocumentName() + '.pdf');
   }
+
+  async function preparePdfImages(clone) {
+  const host = document.createElement("div");
+
+  host.style.cssText = [
+    "position:fixed",
+    "left:-20000px",
+    "top:0",
+    "width:816px",
+    "pointer-events:none"
+  ].join(";");
+
+  clone.style.setProperty("zoom", "1", "important");
+
+  host.appendChild(clone);
+  document.body.appendChild(host);
+
+  const images = [];
+
+  try {
+    for (const img of clone.querySelectorAll("img")) {
+      const picture = await loadImage(
+        img.currentSrc || img.src
+      );
+
+      const pageRect = clone.getBoundingClientRect();
+      const rect = img.getBoundingClientRect();
+
+      if (!rect.width || !rect.height) {
+        throw new Error(
+          "La imagen no tiene un tamaño visible para el PDF."
+        );
+      }
+
+      images.push({
+        picture,
+        x: rect.left - pageRect.left,
+        y: rect.top - pageRect.top,
+        width: rect.width,
+        height: rect.height
+      });
+
+      // Conserva el espacio que ocupa la imagen.
+      img.style.setProperty(
+        "width",
+        rect.width + "px",
+        "important"
+      );
+
+      img.style.setProperty(
+        "height",
+        rect.height + "px",
+        "important"
+      );
+
+      // La foto se dibujará directamente sobre el PDF.
+      img.style.setProperty(
+        "visibility",
+        "hidden",
+        "important"
+      );
+
+      img.removeAttribute("srcset");
+
+      img.src =
+        "data:image/gif;base64," +
+        "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    }
+
+    return images;
+  } finally {
+    host.remove();
+  }
+}
 
   async function renderPageCanvas(page) {
     /* PDF-only fix: export each simulated Word sheet as one fixed Letter canvas. */
@@ -835,8 +916,10 @@ break;}}
   img.style.setProperty('margin', '16px auto', 'important');
   img.style.setProperty('object-fit', 'contain', 'important');
 });
+const pdfImages = await preparePdfImages(clone);
 
-    var serialized = new XMLSerializer().serializeToString(clone);
+var serialized =
+  new XMLSerializer().serializeToString(clone);
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
       '<foreignObject x="0" y="0" width="' + width + '" height="' + height + '">' +
       '<div xmlns="http://www.w3.org/1999/xhtml" style="margin:0;padding:0;background:#fff;width:' + width + 'px;height:' + height + 'px;overflow:hidden;">' + serialized + '</div>' +
@@ -851,8 +934,26 @@ break;}}
     var ctx = canvas.getContext('2d', { alpha: false });
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return canvas;
+    ctx.drawImage(
+  image,
+  0,
+  0,
+  canvas.width,
+  canvas.height
+);
+
+// Dibuja las fotos directamente sobre la hoja.
+pdfImages.forEach(function (item) {
+  ctx.drawImage(
+    item.picture,
+    item.x * scale,
+    item.y * scale,
+    item.width * scale,
+    item.height * scale
+  );
+});
+
+return canvas;
   }
 
   function inlineStyles(source, target) {
@@ -4324,4 +4425,204 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   } else {
     marcarColoresBloqueados();
   }
+})();
+
+/* Zoom táctil de la hoja y seguimiento del cursor */
+(function () {
+  const wrap = document.querySelector(".canvas-wrap");
+
+  if (!wrap) return;
+
+  let pinch = null;
+  let factor = 1;
+  let timer;
+  let ignoreClickUntil = 0;
+
+  const root = document.documentElement;
+
+  function distance(a, b) {
+    return Math.hypot(
+      a.clientX - b.clientX,
+      a.clientY - b.clientY
+    );
+  }
+
+  function middle(a, b) {
+    return {
+      x: (a.clientX + b.clientX) / 2,
+      y: (a.clientY + b.clientY) / 2
+    };
+  }
+
+  wrap.addEventListener("touchstart", function (event) {
+    if (event.touches.length !== 2) return;
+
+    const [a, b] = event.touches;
+
+    const page = event.target.closest(".samuel-pdf-page");
+
+    if (!page) return;
+
+    event.preventDefault();
+
+    const point = middle(a, b);
+    const rect = page.getBoundingClientRect();
+
+    pinch = {
+      page,
+      start: Math.max(1, distance(a, b)),
+      factor,
+      x: (point.x - rect.left) / rect.width,
+      y: (point.y - rect.top) / rect.height
+    };
+  }, { passive: false });
+
+  wrap.addEventListener("touchmove", function (event) {
+    if (!pinch) return;
+
+    event.preventDefault();
+
+    if (event.touches.length !== 2) return;
+
+    const [a, b] = event.touches;
+    const point = middle(a, b);
+
+    factor = Math.max(
+      1,
+      Math.min(
+        4,
+        pinch.factor * distance(a, b) / pinch.start
+      )
+    );
+
+    root.style.setProperty("--word-pinch-factor", factor);
+
+    const rect = pinch.page.getBoundingClientRect();
+
+    wrap.scrollLeft +=
+      rect.left + pinch.x * rect.width - point.x;
+
+    wrap.scrollTop +=
+      rect.top + pinch.y * rect.height - point.y;
+  }, { passive: false });
+
+  function finishPinch(event) {
+    if (pinch) {
+      ignoreClickUntil = Date.now() + 400;
+    }
+
+    if (!event.touches.length) {
+      pinch = null;
+    }
+  }
+
+  wrap.addEventListener("touchend", finishPinch);
+
+  wrap.addEventListener("touchcancel", function () {
+    pinch = null;
+  });
+
+  wrap.addEventListener("click", function (event) {
+    if (Date.now() > ignoreClickUntil) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
+  function preventNativeGesture(event) {
+    event.preventDefault();
+  }
+
+  wrap.addEventListener(
+    "gesturestart",
+    preventNativeGesture,
+    { passive: false }
+  );
+
+  wrap.addEventListener(
+    "gesturechange",
+    preventNativeGesture,
+    { passive: false }
+  );
+
+  function keepCaretVisible() {
+    if (pinch) return;
+
+    const selection = window.getSelection();
+
+    if (!selection?.rangeCount || !selection.isCollapsed) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const node = range.startContainer;
+
+    const element =
+      node.nodeType === 1 ? node : node.parentElement;
+
+    if (!element || !wrap.contains(element)) return;
+
+    if (!element.closest('[contenteditable="true"]')) {
+      return;
+    }
+
+    let rect = range.getBoundingClientRect();
+
+    if (!rect.height) {
+      const target =
+        element.closest("td, th, p") || element;
+
+      rect = target.getBoundingClientRect();
+    }
+
+    const bounds = wrap.getBoundingClientRect();
+    const viewport = window.visualViewport;
+
+    const viewportTop = viewport?.offsetTop || 0;
+    const viewportHeight =
+      viewport?.height || window.innerHeight;
+
+    const top =
+      Math.max(bounds.top, viewportTop) + 20;
+
+    const bottom =
+      Math.min(
+        bounds.bottom,
+        viewportTop + viewportHeight
+      ) - 24;
+
+    if (bottom <= top) return;
+
+    if (rect.bottom > bottom) {
+      wrap.scrollTop += rect.bottom - bottom;
+    } else if (rect.top < top) {
+      wrap.scrollTop += rect.top - top;
+    }
+
+    if (rect.right > bounds.right - 16) {
+      wrap.scrollLeft +=
+        rect.right - bounds.right + 16;
+    } else if (rect.left < bounds.left + 16) {
+      wrap.scrollLeft +=
+        rect.left - bounds.left - 16;
+    }
+  }
+
+  function scheduleCaret() {
+    clearTimeout(timer);
+    timer = setTimeout(keepCaretVisible, 100);
+  }
+
+  document.addEventListener(
+    "selectionchange",
+    scheduleCaret
+  );
+
+  wrap.addEventListener("input", scheduleCaret);
+  wrap.addEventListener("focusin", scheduleCaret);
+
+  window.visualViewport?.addEventListener(
+    "resize",
+    scheduleCaret
+  );
 })();
