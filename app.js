@@ -1972,18 +1972,84 @@ height: 1
     }
   }
 
+function tutorialTitleHasFormat(kind) {
+  const title = getTitleBlock();
+
+  if (!title) return false;
+
+  const walker = document.createTreeWalker(
+    title,
+    NodeFilter.SHOW_TEXT
+  );
+
+  let node;
+  let hasText = false;
+
+  while ((node = walker.nextNode())) {
+    if (!node.textContent.trim()) continue;
+
+    hasText = true;
+
+    const style = getComputedStyle(node.parentElement);
+
+    if (kind === "bold") {
+      const isBold =
+        style.fontWeight === "bold" ||
+        Number(style.fontWeight) >= 600;
+
+      if (!isBold) return false;
+    }
+
+    if (kind === "blue") {
+      const color = style.color.replace(/\s/g, "");
+
+      if (color !== "rgb(0,104,255)") return false;
+    }
+  }
+
+  return hasText;
+}
+
   function handleDocumentClick(event) {
     var target = event.target;
-    if (state === 'bold-click' && target.closest && target.closest('[data-cmd="bold"]')) {
-      clearTip();
-      nextFrame(function () {
-        selectTitleText();
-        state = 'color-button-click';
-        showTip('Da clic', colorButton, { position: 'above', highlight: true });
-      });
+   if (
+  state === "bold-click" &&
+  target.closest &&
+  target.closest('[data-cmd="bold"]')
+) {
+  nextFrame(function () {
+    if (state !== "bold-click") return;
+
+    if (!tutorialTitleHasFormat("bold")) {
+      showTip(
+        "Todavía falta aplicar negritas a todo el título. Selecciónalo completo y toca N.",
+        boldButton,
+        { position: "above", highlight: true }
+      );
+
       return;
     }
-    if (state === 'color-button-click' && target.closest && target.closest('[data-action="toggleTextPalette"]')) {
+
+    selectTitleText();
+    state = "color-button-click";
+
+    showTip(
+      "Ahora abre el color de fuente y selecciona el azul institucional.",
+      colorButton,
+      { position: "above", highlight: true }
+    );
+  });
+
+  return;
+}
+    if (
+  (
+    state === "color-button-click" ||
+    state === "institutional-color-click"
+  ) &&
+  target.closest &&
+  target.closest('[data-action="toggleTextPalette"]')
+) {
       clearTip();
       nextFrame(function () {
         textPalette = document.getElementById('textPalette');
@@ -1995,14 +2061,37 @@ height: 1
       });
       return;
     }
-    if (state === 'institutional-color-click' && target.closest && target.closest('#textPalette [data-color="#0068FF"]')) {
-      clearTip();
-      nextFrame(function () {
-        state = 'select-important-phrase';
-        showTip('Ve a tu párrafo y selecciona una frase o palabra importante que hayas escrito', getParagraphBlock(), { position: 'above' });
-      });
+    if (
+  state === "institutional-color-click" &&
+  target.closest &&
+  target.closest('#textPalette [data-color="#0068FF" i]')
+) {
+  nextFrame(function () {
+    if (state !== "institutional-color-click") return;
+
+    if (!tutorialTitleHasFormat("blue")) {
+      state = "color-button-click";
+
+      showTip(
+        "El título todavía no está completamente azul. Selecciónalo y vuelve a abrir el color de fuente.",
+        colorButton,
+        { position: "above", highlight: true }
+      );
+
       return;
     }
+
+    state = "select-important-phrase";
+
+    showTip(
+      "Ve a tu párrafo y selecciona una frase o palabra importante.",
+      getParagraphBlock(),
+      { position: "above" }
+    );
+  });
+
+  return;
+}
     if (state === 'italic-click' && target.closest && target.closest('[data-cmd="italic"]')) {
       clearTip();
       nextFrame(function () {
@@ -3916,10 +4005,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       allowed: '[data-action="toggleTextPalette"]'
     },
 
-    "institutional-color-click": {
-      text: "Selecciona el color azul institucional.",
-      allowed: '#textPalette [data-color="#0068FF"]'
-    },
+   "institutional-color-click": {
+  text: "Selecciona el azul institucional. Si se cerró la paleta, vuelve a abrir Color de fuente.",
+  allowed:
+    '#textPalette [data-color="#0068FF" i], ' +
+    '[data-action="toggleTextPalette"]'
+},
 
     "select-important-phrase": {
       text: "Selecciona una palabra o frase importante de tu párrafo.",

@@ -2142,3 +2142,17 @@ body #samuelTutorialFinishButton[hidden] {
   margin: 16px auto !important;
   object-fit: contain !important;
 }
+
+/* En este simulador, ofrecer únicamente el azul institucional */
+
+#textPalette button[data-color]:not([data-color="#0068FF" i]) {
+  display: none !important;
+}
+
+#textPalette button[data-color="#0068FF" i] {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  border: 2px solid #222 !important;
+}
