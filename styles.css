@@ -2143,16 +2143,25 @@ body #samuelTutorialFinishButton[hidden] {
   object-fit: contain !important;
 }
 
-/* En este simulador, ofrecer únicamente el azul institucional */
-
+/* Mostrar todos los colores, con los demás bloqueados */
 #textPalette button[data-color]:not([data-color="#0068FF" i]) {
-  display: none !important;
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
+/* Azul institucional disponible */
 #textPalette button[data-color="#0068FF" i] {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
-  border: 2px solid #222 !important;
+  opacity: 1;
+  cursor: pointer;
+  outline: 2px solid #222;
+  outline-offset: 2px;
+}
+
+/* Resaltar Guardar como durante el paso correspondiente */
+#backstage .backstage-menu
+[data-backstage="saveAs"].samuel-tutorial-highlight {
+  outline: 3px solid #ff7d01 !important;
+  outline-offset: -3px !important;
+  border-radius: 5px !important;
+  box-shadow: inset 0 0 0 1px #ff7d01 !important;
 }

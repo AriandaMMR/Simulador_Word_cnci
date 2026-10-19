@@ -4282,3 +4282,46 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     );
   }
 })();
+
+(function bloquearOtrosColores() {
+  const selectorBloqueado =
+    '#textPalette button[data-color]:not([data-color="#0068FF" i])';
+
+  function impedirColorBloqueado(event) {
+    const boton = event.target.closest?.(selectorBloqueado);
+
+    if (!boton) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+
+  window.addEventListener(
+    "pointerdown",
+    impedirColorBloqueado,
+    true
+  );
+
+  window.addEventListener(
+    "click",
+    impedirColorBloqueado,
+    true
+  );
+
+  function marcarColoresBloqueados() {
+    document.querySelectorAll(selectorBloqueado).forEach((boton) => {
+      boton.setAttribute("aria-disabled", "true");
+      boton.title = "En este paso utiliza el azul institucional";
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      marcarColoresBloqueados,
+      { once: true }
+    );
+  } else {
+    marcarColoresBloqueados();
+  }
+})();
