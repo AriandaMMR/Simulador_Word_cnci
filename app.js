@@ -4674,7 +4674,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     scheduleCaret
   );
 
-  wrap.addEventListener("input", scheduleCaret);
+  //wrap.addEventListener("input", scheduleCaret);
   wrap.addEventListener("focusin", scheduleCaret);
 
   window.visualViewport?.addEventListener(
