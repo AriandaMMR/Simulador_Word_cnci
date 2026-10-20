@@ -4330,28 +4330,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let pendingFrame = null;
 
   function updateVisibleViewport() {
-    pendingFrame = null;
+  pendingFrame = null;
 
-    const viewport = window.visualViewport;
+  const viewport = window.visualViewport;
 
-    const height = viewport
-      ? viewport.height
-      : window.innerHeight;
-
-    const top = viewport
-      ? viewport.offsetTop
-      : 0;
-
-    document.documentElement.style.setProperty(
-      "--word-visible-height",
-      height + "px"
-    );
-
-    document.documentElement.style.setProperty(
-      "--word-visible-top",
-      top + "px"
-    );
+  // Si Safari está ampliando la página, no reajustar
+  // el simulador como si se hubiera abierto el teclado.
+  if (viewport && viewport.scale > 1.01) {
+    return;
   }
+
+  const height = viewport
+    ? viewport.height
+    : window.innerHeight;
+
+  const top = viewport
+    ? viewport.offsetTop
+    : 0;
+
+  document.documentElement.style.setProperty(
+    "--word-visible-height",
+    height + "px"
+  );
+
+  document.documentElement.style.setProperty(
+    "--word-visible-top",
+    top + "px"
+  );
+}
 
   function scheduleViewportUpdate() {
     if (pendingFrame !== null) return;
@@ -4627,69 +4633,3 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   );
 })();
 
-/* Evitar que Safari amplíe toda la interfaz */
-(function () {
-  const isSafariIOS =
-    window.CSS &&
-    CSS.supports("-webkit-touch-callout", "none");
-
-  if (!isSafariIOS) return;
-
-  function isInsideSimulator(event) {
-    const target = event.target;
-
-    return (
-      target instanceof Element &&
-      target.closest(".word-app, .samuel-tutorial-tip")
-    );
-  }
-
-  function preventPagePinch(event) {
-    if (!isInsideSimulator(event)) return;
-    if (event.touches.length < 2) return;
-
-    if (event.cancelable) {
-      event.preventDefault();
-    }
-
-    // No detenemos la propagación:
-    // el zoom de la hoja debe seguir recibiendo el gesto.
-  }
-
-  function preventSafariGesture(event) {
-    if (!isInsideSimulator(event)) return;
-
-    if (event.cancelable) {
-      event.preventDefault();
-    }
-  }
-
-  const options = {
-    capture: true,
-    passive: false
-  };
-
-  document.addEventListener(
-    "touchstart",
-    preventPagePinch,
-    options
-  );
-
-  document.addEventListener(
-    "touchmove",
-    preventPagePinch,
-    options
-  );
-
-  document.addEventListener(
-    "gesturestart",
-    preventSafariGesture,
-    options
-  );
-
-  document.addEventListener(
-    "gesturechange",
-    preventSafariGesture,
-    options
-  );
-})();
