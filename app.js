@@ -465,15 +465,64 @@ function insertImage(file) {
       break;case"closeBackstage":backstage.hidden=true;
       break;case "toggleTextPalette": {
   const palette = $("textPalette");
-  const highlightPalette = $("highlightPalette");
 
-  if (palette) {
-    palette.hidden = !palette.hidden;
-  }
+  if (!palette) break;
+
+  const highlightPalette = $("highlightPalette");
 
   if (highlightPalette) {
     highlightPalette.hidden = true;
   }
+
+  const willOpen = palette.hidden;
+
+  const isMobile = window.matchMedia(
+    "(max-width: 1024px), (pointer: coarse)"
+  ).matches;
+
+  if (isMobile) {
+    // Sacar la paleta de la barra que puede recortarla.
+    // Moverla conserva sus botones y eventos.
+    if (palette.parentElement !== document.body) {
+      document.body.appendChild(palette);
+    }
+
+    const button = document.querySelector(
+      '[data-action="toggleTextPalette"]'
+    );
+
+    const viewport = window.visualViewport;
+
+    const visibleTop = viewport
+      ? viewport.offsetTop
+      : 0;
+
+    const visibleBottom =
+      visibleTop +
+      (viewport ? viewport.height : window.innerHeight);
+
+    const buttonBottom = button
+      ? button.getBoundingClientRect().bottom
+      : visibleTop;
+
+    const top = Math.max(
+      visibleTop + 8,
+      Math.min(buttonBottom + 8, visibleBottom - 100)
+    );
+
+    document.documentElement.style.setProperty(
+      "--v3-palette-top",
+      top + "px"
+    );
+
+    palette.style.setProperty(
+      "max-height",
+      Math.max(60, visibleBottom - top - 12) + "px",
+      "important"
+    );
+  }
+
+  palette.hidden = !willOpen;
 
   break;
 }
