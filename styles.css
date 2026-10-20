@@ -2198,3 +2198,19 @@ body #samuelTutorialFinishButton[hidden] {
     margin: 0 auto 24px !important;
   }
 }
+
+/* Ajustes específicos de Safari en iPhone y iPad */
+@supports (-webkit-touch-callout: none) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .word-app,
+  .word-app .canvas-wrap,
+  .word-app .samuel-pdf-page,
+  .word-app [contenteditable],
+  .samuel-tutorial-tip {
+    touch-action: pan-x pan-y !important;
+  }
+}
