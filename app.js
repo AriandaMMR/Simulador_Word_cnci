@@ -45,11 +45,9 @@ function preserveSelectionOnToolbar(event) {
 
   if (!button) return;
 
-  // Guarda el texto seleccionado antes de tocar la herramienta.
   rememberEditorSelection();
 
-  // Permite el toque normal para abrir la paleta
-  // y seleccionar un color en iPhone.
+  // La paleta necesita recibir el toque normal.
   if (
     button.matches('[data-action="toggleTextPalette"]') ||
     button.closest("#textPalette")
@@ -57,7 +55,6 @@ function preserveSelectionOnToolbar(event) {
     return;
   }
 
-  // Conserva el comportamiento de las demás herramientas.
   if (
     savedEditorRange &&
     savedEditorRange.startContainer.isConnected &&
@@ -66,6 +63,7 @@ function preserveSelectionOnToolbar(event) {
     event.preventDefault();
   }
 }
+
 document.addEventListener(
   "pointerdown",
   preserveSelectionOnToolbar,
@@ -4339,34 +4337,28 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let pendingFrame = null;
 
   function updateVisibleViewport() {
-  pendingFrame = null;
+    pendingFrame = null;
 
-  const viewport = window.visualViewport;
+    const viewport = window.visualViewport;
 
-  // Si Safari está ampliando la página, no reajustar
-  // el simulador como si se hubiera abierto el teclado.
-  if (viewport && viewport.scale > 1.01) {
-    return;
+    const height = viewport
+      ? viewport.height
+      : window.innerHeight;
+
+    const top = viewport
+      ? viewport.offsetTop
+      : 0;
+
+    document.documentElement.style.setProperty(
+      "--word-visible-height",
+      height + "px"
+    );
+
+    document.documentElement.style.setProperty(
+      "--word-visible-top",
+      top + "px"
+    );
   }
-
-  const height = viewport
-    ? viewport.height
-    : window.innerHeight;
-
-  const top = viewport
-    ? viewport.offsetTop
-    : 0;
-
-  document.documentElement.style.setProperty(
-    "--word-visible-height",
-    height + "px"
-  );
-
-  document.documentElement.style.setProperty(
-    "--word-visible-top",
-    top + "px"
-  );
-}
 
   function scheduleViewportUpdate() {
     if (pendingFrame !== null) return;
@@ -4641,4 +4633,3 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     scheduleCaret
   );
 })();
-
