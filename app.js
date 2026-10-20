@@ -45,9 +45,19 @@ function preserveSelectionOnToolbar(event) {
 
   if (!button) return;
 
+  // Guarda el texto seleccionado antes de tocar la herramienta.
   rememberEditorSelection();
 
-  // Evita que el botón quite el foco antes de aplicar formato.
+  // Permite el toque normal para abrir la paleta
+  // y seleccionar un color en iPhone.
+  if (
+    button.matches('[data-action="toggleTextPalette"]') ||
+    button.closest("#textPalette")
+  ) {
+    return;
+  }
+
+  // Conserva el comportamiento de las demás herramientas.
   if (
     savedEditorRange &&
     savedEditorRange.startContainer.isConnected &&
@@ -56,7 +66,6 @@ function preserveSelectionOnToolbar(event) {
     event.preventDefault();
   }
 }
-
 document.addEventListener(
   "pointerdown",
   preserveSelectionOnToolbar,
